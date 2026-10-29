@@ -15,21 +15,29 @@ HEROKU_API = HEROKU_API_KEY
 
 MONGO_DB_URI = os.getenv("MONGO_DB_URI", "").strip()
 
-# MUTABLE list — modules isse import karte hain, same object shared
+# Env fallback sudo IDs + owner
 SUDO_USERS = [
     int(x) for x in os.getenv("SUDO_USERS", "").replace(",", " ").split()
     if x.strip().isdigit()
 ]
+if OWNER_ID and OWNER_ID not in SUDO_USERS:
+    SUDO_USERS.append(OWNER_ID)
 
-BOT_TOKENS = []
-for i in range(1, 11):
-    t = os.getenv(f"BOT_TOKEN{i}", "").strip()
-    if t:
-        BOT_TOKENS.append(t)
+# Export BOT_TOKEN (singular) + BOT_TOKEN2..10 for STRANGER module compat
+BOT_TOKEN = os.getenv("BOT_TOKEN1", "").strip() or os.getenv("BOT_TOKEN", "").strip()
+for _i in range(2, 11):
+    globals()[f"BOT_TOKEN{_i}"] = os.getenv(f"BOT_TOKEN{_i}", "").strip()
 
-# Clients — .start() sirf main.py me hoga (loop mismatch avoid)
+# ALWAYS create X1..X10 (modules import all 10 unconditionally)
 CLIENTS = []
-for i, _ in enumerate(BOT_TOKENS):
-    c = TelegramClient(f"X{i+1}", API_ID, API_HASH)
+BOT_TOKENS = []  # (client, token) pairs — only for non-empty tokens
+for i in range(1, 11):
+    token = os.getenv(f"BOT_TOKEN{i}", "").strip()
+    c = TelegramClient(f"X{i}", API_ID, API_HASH)
+    globals()[f"X{i}"] = c
     CLIENTS.append(c)
-    globals()[f"X{i+1}"] = c
+    if token:
+        BOT_TOKENS.append((c, token))
+
+if not BOT_TOKENS:
+    raise SystemExit("[!] No BOT_TOKEN1..10 set")

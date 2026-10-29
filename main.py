@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 import config
-from config import CLIENTS, BOT_TOKENS
+from config import BOT_TOKENS
 from models.sudo import mongo_ids
 
 logging.basicConfig(
@@ -15,11 +15,9 @@ log = logging.getLogger("ApexSpam")
 
 
 async def sync_mongo_sudo():
-    """Background task: merge Mongo sudo IDs into config.SUDO_USERS."""
     while True:
         try:
-            ids = await mongo_ids()
-            for uid in ids:
+            for uid in await mongo_ids():
                 if uid not in config.SUDO_USERS:
                     config.SUDO_USERS.append(uid)
         except Exception as e:
@@ -41,20 +39,18 @@ def load_modules():
 
 
 async def main():
-    if not CLIENTS:
-        raise SystemExit("[!] No bot tokens")
+    load_modules()  # STRANGER style: handlers registered at import
 
-    # IMPORTANT: modules load pehle (handlers register on unstarted clients),
-    # phir clients start
-    load_modules()
-
-    for c, t in zip(CLIENTS, BOT_TOKENS):
-        await c.start(bot_token=t)
-        me = await c.get_me()
-        log.info(f"✅ Logged in as @{me.username}")
+    for client, token in BOT_TOKENS:
+        try:
+            await client.start(bot_token=token)
+            me = await client.get_me()
+            log.info(f"✅ Logged in as @{me.username}")
+        except Exception as e:
+            log.exception(f"❌ Login failed for one client: {e}")
 
     asyncio.create_task(sync_mongo_sudo())
-    log.info(f"🚀 Running with {len(CLIENTS)} client(s)")
+    log.info(f"🚀 Running with {len(BOT_TOKENS)} active client(s)")
     await asyncio.Event().wait()
 
 
