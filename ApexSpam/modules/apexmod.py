@@ -1,6 +1,5 @@
 """Apex Spam X — banall / unbanall / nc (nuke chat)."""
 import asyncio
-
 from telethon import events
 from telethon.errors import FloodWaitError
 from telethon.tl.functions.channels import EditBannedRequest
@@ -9,7 +8,6 @@ from telethon.tl.types import (
     ChannelParticipantsKicked,
     ChatBannedRights,
 )
-
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
 from ApexSpam.ui import header, quote, kv, divider
 from ApexSpam.buttons import ib
@@ -132,7 +130,6 @@ async def _do_banall(e):
             skip.add(p.id)
     except Exception:
         pass
-
     rights = ChatBannedRights(until_date=None, view_messages=True)
     banned = failed = seen = 0
     async for p in client.iter_participants(chat, aggressive=True):
@@ -149,7 +146,6 @@ async def _do_banall(e):
         if seen % 15 == 0:
             await _progress(msg, "banall", banned + failed, seen, "🔨")
         await asyncio.sleep(0.05)
-
     await msg.edit(
         f"{header('banall done', '✅')}\n\n"
         + quote(f"{kv('Banned', banned)}\n{kv('Failed', failed)}\n{kv('Scanned', seen)}", expandable=True),
@@ -174,7 +170,6 @@ async def _do_unbanall(e):
         if seen % 15 == 0:
             await _progress(msg, "unbanall", freed + failed, seen, "♻️")
         await asyncio.sleep(0.05)
-
     await msg.edit(
         f"{header('unbanall done', '✅')}\n\n"
         + quote(f"{kv('Unbanned', freed)}\n{kv('Failed', failed)}", expandable=True),
@@ -191,7 +186,6 @@ async def _do_nc(e, limit):
             ids.append(m.id)
     except Exception as ex:
         return await msg.edit(f"{header('nuke chat', '❌')}\n\n" + quote(str(ex)), parse_mode="html")
-
     deleted = 0
     for i in range(0, len(ids), 100):
         chunk = ids[i:i + 100]
@@ -205,7 +199,6 @@ async def _do_nc(e, limit):
         if i % 300 == 0:
             await _progress(msg, "nuke chat", deleted, len(ids), "💣")
         await asyncio.sleep(0.1)
-
     await msg.edit(
         f"{header('nuke done', '✅')}\n\n"
         + quote(f"{kv('Deleted', deleted)}\n{kv('Scanned', len(ids))}", expandable=True),

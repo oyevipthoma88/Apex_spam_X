@@ -1,17 +1,11 @@
-import asyncio
-import importlib
-import logging
+import asyncio, importlib, logging
 from pathlib import Path
-
 import config
 from config import BOT_TOKENS
 from models.sudo import mongo_ids
 from ApexSpam import fonts, buttons
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] %(levelname)s - %(message)s",
-)
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s")
 log = logging.getLogger("ApexSpam")
 
 
@@ -28,10 +22,8 @@ async def sync_loop():
 
 
 def load_modules():
-    mod_dir = Path("ApexSpam/modules")
-    for path in sorted(mod_dir.glob("*.py")):
-        if path.name.startswith("__"):
-            continue
+    for path in sorted(Path("ApexSpam/modules").glob("*.py")):
+        if path.name.startswith("__"): continue
         mod_name = f"ApexSpam.modules.{path.stem}"
         try:
             mod = importlib.import_module(mod_name)

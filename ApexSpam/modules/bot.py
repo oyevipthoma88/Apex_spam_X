@@ -1,8 +1,6 @@
 """Apex Spam X — premium ping + Heroku reboot."""
 import time
-
 from telethon import events
-
 from ApexSpam import HNDLR, OWNER_ID, START_TIME, HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS
 from ApexSpam.ui import header, quote, kv, divider, bar, footer
 
@@ -42,7 +40,6 @@ def register():
             await msg.edit("⚡ <i>Probing database…</i>", parse_mode="html")
             edit_lat = round((time.time() - t1) * 1000, 2)
             db = await _mongo_ms()
-
             status = "Excellent" if rtt < 250 else "Good" if rtt < 600 else "Slow"
             text = (
                 f"{header('pong', '⚡')}\n\n"

@@ -1,16 +1,13 @@
 import logging
 import time
 from io import BytesIO
-
 from telethon import events
-
 from ApexSpam import HNDLR, START_TIME, CLIENTS
 from ApexSpam.ui import header, quote, kv, divider, link_user, footer, BRAND
 from ApexSpam.buttons import ib, ub
 from models.bot_settings import get_value
 
 log = logging.getLogger("ApexSpam.start")
-
 DEFAULT_CAPTION = "{header}\n\n{greet}\n\n{q1}\n\n{q2}\n\n{meta}"
 
 BUTTONS = [
