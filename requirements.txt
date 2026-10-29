@@ -2,3 +2,4 @@ telethon
 cryptg
 motor
 pymongo
+heroku3

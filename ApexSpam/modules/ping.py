@@ -1,12 +1,11 @@
 import time
-import logging
 from telethon import events, Button
-from config import CMD_HNDLR, START_TIME, CLIENTS
+from config import START_TIME, CLIENTS
+from ApexSpam.patterns import cmd
 from models.users import track_user
 
-log = logging.getLogger("ApexSpam.ping")
 
-def _ping_text(lat: float) -> str:
+def _text(lat: float) -> str:
     up = int(time.time() - START_TIME)
     return (
         "**🏓 P O N G !**\n\n"
@@ -16,24 +15,23 @@ def _ping_text(lat: float) -> str:
         "**🤖 Apex Spam X**"
     )
 
+
 def register():
-    pattern = rf"\{CMD_HNDLR}ping(?: |$)"
     for client in CLIENTS:
-        @client.on(events.NewMessage(pattern=pattern))
+        @client.on(events.NewMessage(pattern=cmd("ping"), incoming=True))
         async def ping_handler(event):
-            log.info(f"🎯 PING HIT from {event.sender_id} in chat {event.chat_id}")
-            try:
-                await track_user(event.sender_id, getattr(event.sender, "username", None))
-            except Exception as e:
-                log.exception(f"Mongo track_user failed: {e}")
             t0 = time.time()
             msg = await event.reply("🏓 Pinging...")
             lat = round((time.time() - t0) * 1000, 2)
             await msg.edit(
-                _ping_text(lat),
+                _text(lat),
                 buttons=[[Button.inline("🔄 Refresh", b"ping_ref")]],
                 parse_mode="md",
             )
+            try:
+                await track_user(event.sender_id, getattr(event.sender, "username", None))
+            except Exception:
+                pass
 
         @client.on(events.CallbackQuery(data=b"ping_ref"))
         async def ping_refresh_cb(event):
@@ -41,7 +39,7 @@ def register():
             t0 = time.time()
             lat = round((time.time() - t0) * 1000, 2)
             await event.edit(
-                _ping_text(lat),
+                _text(lat),
                 buttons=[[Button.inline("🔄 Refresh", b"ping_ref")]],
                 parse_mode="md",
             )

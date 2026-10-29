@@ -2,13 +2,18 @@ import asyncio
 import importlib
 import logging
 from pathlib import Path
-from config import CLIENTS, BOT_TOKENS
+from telethon import TelegramClient
+from telethon.sessions import MemorySession
+
+import config
+from config import API_ID, API_HASH, BOT_TOKENS
 
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] %(levelname)s - %(message)s",
 )
 log = logging.getLogger("ApexSpam")
+
 
 def load_modules():
     mod_dir = Path("ApexSpam/modules")
@@ -26,26 +31,33 @@ def load_modules():
         except Exception as e:
             log.exception(f"❌ Failed: {mod_name} → {e}")
 
-async def start_client(client, token):
+
+async def start_one(idx: int, token: str):
+    loop = asyncio.get_running_loop()
+    client = TelegramClient(
+        f"X{idx+1}",
+        API_ID,
+        API_HASH,
+        loop=loop,                 # <-- SAME loop, fixes dispatch
+        session=MemorySession(),   # <-- no SQLite file on Heroku
+    )
     await client.start(bot_token=token)
     me = await client.get_me()
     log.info(f"✅ Logged in as @{me.username}")
+    config.CLIENTS.append(client)
     return client
 
+
 async def main():
-    if not CLIENTS:
-        raise SystemExit("[!] No bot tokens found (BOT_TOKEN1/2/3)")
+    for i, token in enumerate(BOT_TOKENS):
+        await start_one(i, token)
 
-    # Saare clients ko parallel mein start karein
-    await asyncio.gather(*[start_client(c, t) for c, t in zip(CLIENTS, BOT_TOKENS)])
-
-    # Modules load karein
+    # Modules load ONLY after clients exist and loop is running
     load_modules()
 
-    log.info(f"🚀 Bot is now running with {len(CLIENTS)} client(s)...")
-    
-    # Event loop ko zinda rakhein (yeh run_until_disconnected se better hai)
+    log.info(f"🚀 Bot is now running with {len(config.CLIENTS)} client(s)...")
     await asyncio.Event().wait()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

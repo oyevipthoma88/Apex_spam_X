@@ -1,8 +1,20 @@
-# Apne custom messages yahan daalein (copy mat karo STRANGER ke abusive ones)
-RAID       = ["raid text 1", "raid text 2", "raid text 3"]
-SRAID      = ["sraid text 1", "sraid text 2", "sraid text 3"]
-CRAID      = ["craid text 1", "craid text 2"]
-QRAID      = ["qraid text 1", "qraid text 2"]
-LOVERAID   = ["love text 1", "love text 2"]
-HRRAID     = ["hr text 1", "hr text 2"]
-SHAYRI_RAID = ["shayri 1", "shayri 2"]
+RAID = [
+    "tera pura system hil jayega aaj",
+    "raid mode activated 💀",
+    "bhag ja warna late ho jayega",
+]
+SRAID = [
+    "shayri sun le warna raid shuru",
+    "dil se bura lag jayega",
+]
+CRAID = ["custom raid 1", "custom raid 2"]
+QRAID = ["quote raid 1", "quote raid 2"]
+LOVERAID = ["pyar barsa raha hoon", "dil le ja meri jaan"]
+HRRAID = ["happy birthday 🎂", "janamdin mubarak ho"]
+SHAYRI_RAID = ["shayri line 1", "shayri line 2"]
+ABUSE = ["noob saala", "game khelna seekh", "bot se panga mat le"]
+FLIRT = ["tu bohot cute hai", "smile toh de zara", "dil de de"]
+HRAID = ["happy birthday 🎉", "aaj tera din hai", "party kab de raha"]
+GM = ["good morning 🌞", "uth ja bhai", "subah ho gayi"]
+GA = ["good afternoon ☀️", "khana kha le", "aaram kar"]
+GN = ["good night 🌙", "so ja ab", "meethi neend"]
