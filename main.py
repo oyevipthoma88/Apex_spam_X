@@ -2,17 +2,29 @@ import asyncio
 import importlib
 import logging
 from pathlib import Path
-from telethon import TelegramClient
-from telethon.sessions import MemorySession
 
 import config
-from config import API_ID, API_HASH, BOT_TOKENS
+from config import CLIENTS, BOT_TOKENS
+from models.sudo import mongo_ids
 
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] %(levelname)s - %(message)s",
 )
 log = logging.getLogger("ApexSpam")
+
+
+async def sync_mongo_sudo():
+    """Background task: merge Mongo sudo IDs into config.SUDO_USERS."""
+    while True:
+        try:
+            ids = await mongo_ids()
+            for uid in ids:
+                if uid not in config.SUDO_USERS:
+                    config.SUDO_USERS.append(uid)
+        except Exception as e:
+            log.warning(f"Mongo sync failed: {e}")
+        await asyncio.sleep(60)
 
 
 def load_modules():
@@ -22,40 +34,27 @@ def load_modules():
             continue
         mod_name = f"ApexSpam.modules.{path.stem}"
         try:
-            mod = importlib.import_module(mod_name)
-            if hasattr(mod, "register"):
-                mod.register()
-                log.info(f"✅ Loaded: {mod_name}")
-            else:
-                log.warning(f"⚠️ {mod_name} has no register()")
+            importlib.import_module(mod_name)
+            log.info(f"✅ Loaded: {mod_name}")
         except Exception as e:
             log.exception(f"❌ Failed: {mod_name} → {e}")
 
 
-async def start_one(idx: int, token: str):
-    loop = asyncio.get_running_loop()
-    client = TelegramClient(
-        f"X{idx+1}",
-        API_ID,
-        API_HASH,
-        loop=loop,                 # <-- SAME loop, fixes dispatch
-        session=MemorySession(),   # <-- no SQLite file on Heroku
-    )
-    await client.start(bot_token=token)
-    me = await client.get_me()
-    log.info(f"✅ Logged in as @{me.username}")
-    config.CLIENTS.append(client)
-    return client
-
-
 async def main():
-    for i, token in enumerate(BOT_TOKENS):
-        await start_one(i, token)
+    if not CLIENTS:
+        raise SystemExit("[!] No bot tokens")
 
-    # Modules load ONLY after clients exist and loop is running
+    # IMPORTANT: modules load pehle (handlers register on unstarted clients),
+    # phir clients start
     load_modules()
 
-    log.info(f"🚀 Bot is now running with {len(config.CLIENTS)} client(s)...")
+    for c, t in zip(CLIENTS, BOT_TOKENS):
+        await c.start(bot_token=t)
+        me = await c.get_me()
+        log.info(f"✅ Logged in as @{me.username}")
+
+    asyncio.create_task(sync_mongo_sudo())
+    log.info(f"🚀 Running with {len(CLIENTS)} client(s)")
     await asyncio.Event().wait()
 
 

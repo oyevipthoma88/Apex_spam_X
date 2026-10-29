@@ -1,23 +1,54 @@
-# Apex Spam X
+<### 🌷𝐒𝐓𝐑𝐀𝐍𝐆𝐄𝐑🌷
 
-Telegram multi-client bot — Termux se push, Heroku pe host.
-MongoDB-backed sudo, inline ping/help UI, 8 raid commands + utilities.
+<!--
+**itzshukla/itzshukla** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
-## Deploy to Heroku
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/oyevipthoma88/Apex_spam_X)
+<p align="center">
+    <b>ᴠɪsɪᴛᴏʀs</b><br>
+ -->    <img align="middle" src="https://profile-counter.glitch.me/itzshukla/count.svg" />
+</p>
 
-After the app is created, open **Resources** and turn **worker** dyno ON.
+<h1 align="center"><b>⚡️𝐒𝐓𝐑𝐀𝐍𝐆𝐄𝐑 𝐒𝐏𝐀𝐌⚡️</b></h1>
 
-## Required Config Vars
+<h4 align="center">⚡️𝐓𝐇𝐄 𝐏𝐎𝐖𝐄𝐑𝐅𝐔𝐋 𝐒𝐏𝐀𝐌𝐁𝐎𝐓𝐒⚡️</h4>
 
-`API_ID`, `API_HASH`, `OWNER_ID`, `MONGO_DB_URI`, `BOT_TOKEN1`
-Optional: `BOT_TOKEN2`, `BOT_TOKEN3`, `CMD_HNDLR=.`
+<p align="center"><a href="https://t.me/shiva_ansh_op"><img src="https://telegra.ph/file/05522e13c97752efe5e75.png" width="400"></a></p>
 
-## Commands
 
-- `.ping` — latency + uptime (inline refresh)
-- `.help` — category menu
-- `.addsudo` / `.delsudo` / `.listsudo` — Mongo sudo
-- `.raid` `.mraid` `.sraid` `.craid` `.qraid` `.loveraid` `.hrraid` `.shayriraid` `<count> <user|reply>`
-- `.spam` `.echo` `.emoji` `.purge` `.tagall` `.kick` `.gcast`
+> ⭐️ Thanks to everyone for using THIS STRANGER SPAM BOT, That is the greatest pleasure we have !
+
+<br>
+
+- ⚠️ Do not forget to fork this repo. Else error can occur in deployment.
+
+# ᴅᴇᴘʟᴏʏᴍᴇɴᴛ
+
+
+<details>
+<summary><b>ᴅᴇᴘʟᴏʏ ᴛᴏ ʜᴇʀᴏᴋᴜ</b></summary>
+<br>
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https://github.com/itzshukla/STRANGER-SPAM-X)
+  
+</details>
+
+
+<details>
+<summary><b>ᴅᴇᴘʟᴏʏ ᴛᴏ ᴋᴏʏᴇʙ</b></summary>
+<br>
+
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=&branch=name&name=thealtron)
+  
+</details>
+
+
+# Rᴇǫᴜɪʀᴇᴍᴇɴᴛs
+
+- `10 BOT-TOKENS`
+
+- `OWNER-ID`
+
+
+# ꜱᴜᴘᴘᴏʀᴛ ✨
+<a href="https://t.me/MASTIWITHFRIENDSXD"><img src="https://img.shields.io/badge/Join-Telegram%20Channel-red.svg?logo=Telegram"></a>
