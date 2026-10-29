@@ -33,8 +33,6 @@ def load_modules():
         mod_name = f"ApexSpam.modules.{path.stem}"
         try:
             mod = importlib.import_module(mod_name)
-            # STRANGER-style modules auto-register via decorators.
-            # Premium modules expose register() — we MUST call it.
             if hasattr(mod, "register") and callable(mod.register):
                 mod.register()
                 log.info(f"✅ Loaded+registered: {mod_name}")
@@ -52,9 +50,12 @@ async def main():
             me = await client.get_me()
             log.info(f"✅ Logged in as @{me.username}")
         except Exception as e:
-            log.exception(f"❌ Login failed for one client: {e}")
+            log.exception(f"❌ Login failed: {e}")
     asyncio.create_task(sync_mongo_sudo())
-    log.info(f"🚀 Running with {len(BOT_TOKENS)} active client(s)")
+    log.info(
+        f"🚀 Running with {len(BOT_TOKENS)} client(s). "
+        "GC FIX: BotFather → Group Privacy → OFF → remove+re-add bot."
+    )
     await asyncio.Event().wait()
 
 
