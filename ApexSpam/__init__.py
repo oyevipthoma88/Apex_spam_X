@@ -14,3 +14,4 @@ for _i in range(1, 11):
 # BOT_TOKEN2..BOT_TOKEN10
 for _i in range(2, 11):
     globals()[f"BOT_TOKEN{_i}"] = getattr(_cfg, f"BOT_TOKEN{_i}", "")
+APEX_OWNER = []

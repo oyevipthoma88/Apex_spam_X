@@ -41,3 +41,4 @@ for i in range(1, 11):
 
 if not BOT_TOKENS:
     raise SystemExit("[!] No BOT_TOKEN1..10 set")
+APEX_OWNER = []
