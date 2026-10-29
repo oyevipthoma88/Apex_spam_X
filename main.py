@@ -6,7 +6,7 @@ from pathlib import Path
 import config
 from config import BOT_TOKENS
 from models.sudo import mongo_ids
-from ApexSpam import fonts
+from ApexSpam import fonts, buttons
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +24,7 @@ async def sync_loop():
             await fonts.sync_from_db()
         except Exception as e:
             log.warning(f"sync_loop: {e}")
-        await asyncio.sleep(30)
+        await asyncio.sleep(20)
 
 
 def load_modules():
@@ -46,6 +46,8 @@ def load_modules():
 
 async def main():
     fonts.patch()
+    await fonts.sync_from_db()
+    log.info(f"🎨 Active font: {fonts.ACTIVE_FONT}")
     load_modules()
     for client, token in BOT_TOKENS:
         try:
@@ -55,7 +57,7 @@ async def main():
         except Exception as e:
             log.exception(f"❌ Login failed: {e}")
     asyncio.create_task(sync_loop())
-    log.info(f"🚀 Running with {len(BOT_TOKENS)} client(s).")
+    log.info(f"🚀 Running with {len(BOT_TOKENS)} client(s) | colored buttons: {buttons.HAS_STYLE}")
     await asyncio.Event().wait()
 
 

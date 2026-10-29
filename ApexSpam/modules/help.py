@@ -1,37 +1,31 @@
-from telethon import events, Button
+from telethon import events
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
-from ApexSpam.ui import header, quote, section, divider
+from ApexSpam.ui import header, quote, divider, footer
+from ApexSpam.buttons import ib
 
 
-def _is_owner(uid): return uid == OWNER_ID
-def _is_sudo(uid):  return uid in SUDO_USERS
+def _owner(uid): return uid == OWNER_ID
+def _sudo(uid):  return uid in SUDO_USERS or _owner(uid)
 
 
 def _menu_text(uid):
-    if _is_owner(uid):
-        role = "👑 Owner"
-    elif _is_sudo(uid):
-        role = "🛡️ Sudo"
-    else:
-        role = "👤 User"
+    role = "👑 Owner" if _owner(uid) else ("🛡️ Sudo" if uid in SUDO_USERS else "👤 User")
     return (
         f"{header('apex help', '⚡')}\n\n"
-        + quote(f"<b>Prefix</b>  :  <code>{HNDLR}</code>\n<b>Role</b>    :  {role}")
-        + f"\n\n{divider()}\n<i>Select a category</i> 👇"
+        + quote(f"◈ <b>Prefix</b>  :  <code>{HNDLR}</code>\n◈ <b>Role</b>    :  <b>{role}</b>")
+        + f"\n\n{divider()}\n<i>Select a category</i> 👇\n{footer()}"
     )
 
 
 def _menu_buttons(uid):
-    buttons = []
-    if _is_owner(uid) or _is_sudo(uid):
-        buttons.append([Button.inline("🔫 Raid", data="help_raid"),
-                        Button.inline("💬 Spam", data="help_spam")])
-    buttons.append([Button.inline("🛠️ Extra", data="help_extra")])
-    if _is_owner(uid):
-        buttons.append([Button.inline("🛡️ Admin", data="help_admin"),
-                        Button.inline("🔐 Sudo", data="help_sudo")])
-        buttons.append([Button.inline("🎨 Font", data="help_font")])
-    return buttons
+    rows = []
+    if _sudo(uid):
+        rows.append([ib("🔫 Raid", b"help_raid", "primary"), ib("💬 Spam", b"help_spam", "primary")])
+    rows.append([ib("🛠️ Extra", b"help_extra", "primary")])
+    if _owner(uid):
+        rows.append([ib("🛡️ Admin", b"help_admin", "danger"), ib("⚔️ Moderation", b"help_mod", "danger")])
+        rows.append([ib("🔐 Sudo", b"help_sudo", "success"), ib("🎨 Font", b"help_font", "success")])
+    return rows
 
 
 PAGES = {
@@ -58,7 +52,7 @@ PAGES = {
         expandable=True,
     ),
     "help_extra": header("extra", "🛠️") + "\n\n" + quote(
-        f"<code>{HNDLR}ping</code>     — latency\n"
+        f"<code>{HNDLR}ping</code>     — live latency\n"
         f"<code>{HNDLR}alive</code>    — alive card\n"
         f"<code>{HNDLR}id</code>       — user/chat id\n"
         f"<code>{HNDLR}join</code>     — join chat\n"
@@ -76,6 +70,18 @@ PAGES = {
         f"<code>{HNDLR}gcdiag</code>     — group check",
         expandable=True,
     ) + "\n\n" + quote("<b>Perm</b> : <code>Owner only</code>"),
+    "help_mod": header("moderation", "⚔️") + "\n\n" + quote(
+        f"<code>{HNDLR}banall</code>      — ban all members\n"
+        f"<code>{HNDLR}unbanall</code>    — unban all\n"
+        f"<code>{HNDLR}nc [limit]</code>  — nuke chat\n"
+        f"<code>{HNDLR}kick</code>        — kick (reply)\n"
+        f"<code>{HNDLR}ban</code>         — ban (reply)",
+        expandable=True,
+    ) + "\n\n" + quote(
+        "<b>Perm</b> : <code>Owner / Sudo</code>\n"
+        "<b>Need</b> : bot admin + ban/delete rights\n"
+        "<i>All destructive actions ask for confirmation.</i>"
+    ),
     "help_sudo": header("sudo", "🔐") + "\n\n" + quote(
         f"<code>{HNDLR}addsudo ID</code>\n"
         f"<code>{HNDLR}delsudo ID</code>\n"
@@ -83,37 +89,36 @@ PAGES = {
         expandable=True,
     ) + "\n\n" + quote("<i>Mongo + env union — global.</i>"),
     "help_font": header("font", "🎨") + "\n\n" + quote(
-        f"<code>{HNDLR}font</code>          — open studio\n"
-        f"<code>{HNDLR}font bold</code>     — set by name\n"
-        f"<code>{HNDLR}font 1</code>        — set by index\n\n"
-        "All bot messages instantly use selected font.",
+        f"<code>{HNDLR}font</code>        — studio\n"
+        f"<code>{HNDLR}font bold</code>   — by name\n"
+        f"<code>{HNDLR}font 1</code>      — by index\n\n"
+        "Applies to raids, spam and every bot reply.",
         expandable=True,
     ) + "\n\n" + quote("<b>Perm</b> : <code>Owner only</code>"),
 }
+
+_GATE_OWNER = {"help_admin", "help_sudo", "help_font"}
+_GATE_SUDO = {"help_raid", "help_spam", "help_mod"}
 
 
 def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}help(?: |$)"))
         async def help_cmd(e):
-            await e.reply(_menu_text(e.sender_id),
-                          buttons=_menu_buttons(e.sender_id),
-                          parse_mode="html")
+            await e.reply(_menu_text(e.sender_id), buttons=_menu_buttons(e.sender_id), parse_mode="html")
 
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}help (\w+)(?: |$)"))
         async def help_text(e):
             key = f"help_{e.pattern_match.group(1).lower()}"
             uid = e.sender_id
-            if key in ("help_admin", "help_sudo", "help_font") and not _is_owner(uid):
-                return
-            if key in ("help_raid", "help_spam") and not (_is_owner(uid) or _is_sudo(uid)):
-                return
+            if key in _GATE_OWNER and not _owner(uid): return
+            if key in _GATE_SUDO and not _sudo(uid): return
             if key in PAGES:
                 await e.reply(PAGES[key], parse_mode="html")
 
         def _mk(txt):
             async def cb(e):
-                await e.edit(txt, buttons=[[Button.inline("« Back", data="help_back")]], parse_mode="html")
+                await e.edit(txt, buttons=[[ib("« Back", b"help_back", "primary")]], parse_mode="html")
             return cb
 
         for key, txt in PAGES.items():
@@ -121,13 +126,11 @@ def register():
 
         @c.on(events.CallbackQuery(data=b"help_back"))
         async def back(e):
-            await e.edit(_menu_text(e.sender_id),
-                         buttons=_menu_buttons(e.sender_id),
-                         parse_mode="html")
+            await e.edit(_menu_text(e.sender_id), buttons=_menu_buttons(e.sender_id), parse_mode="html")
 
         @c.on(events.CallbackQuery(data=b"help_font"))
-        async def help_font_cb(e):
-            if not _is_owner(e.sender_id):
+        async def help_font(e):
+            if not _owner(e.sender_id):
                 return await e.answer("Owner only.", alert=True)
-            from ApexSpam.modules import apexfont
-            await apexfont._open_menu(e)
+            from ApexSpam.modules.apexfont import _open_menu
+            await _open_menu(e)
