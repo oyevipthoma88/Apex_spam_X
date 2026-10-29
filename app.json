@@ -1,0 +1,48 @@
+{
+  "name": "Apex Spam X",
+  "description": "Telegram multi-client bot: raids, sudo via MongoDB, inline ping/help UI.",
+  "repository": "https://github.com/oyevipthoma88/Apex_spam_X",
+  "keywords": ["telegram", "telethon", "bot", "mongodb", "heroku"],
+  "stack": "heroku-24",
+  "buildpacks": [
+    { "url": "heroku/python" }
+  ],
+  "formation": {
+    "worker": { "quantity": 1, "size": "basic" }
+  },
+  "env": {
+    "API_ID": {
+      "description": "Telegram API ID (my.telegram.org)",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Telegram API HASH (my.telegram.org)",
+      "required": true
+    },
+    "OWNER_ID": {
+      "description": "Your Telegram numeric user ID (@userinfobot)",
+      "required": true
+    },
+    "MONGO_DB_URI": {
+      "description": "MongoDB Atlas connection string",
+      "required": true
+    },
+    "BOT_TOKEN1": {
+      "description": "Bot token from @BotFather (main client)",
+      "required": true
+    },
+    "BOT_TOKEN2": {
+      "description": "Optional second bot token",
+      "required": false
+    },
+    "BOT_TOKEN3": {
+      "description": "Optional third bot token",
+      "required": false
+    },
+    "CMD_HNDLR": {
+      "description": "Command prefix",
+      "value": ".",
+      "required": false
+    }
+  }
+}

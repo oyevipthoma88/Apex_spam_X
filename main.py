@@ -2,7 +2,7 @@ import asyncio
 import importlib
 import logging
 from pathlib import Path
-from config import CLIENTS
+from config import CLIENTS, BOT_TOKENS
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,6 +29,12 @@ def load_modules():
 async def main():
     if not CLIENTS:
         raise SystemExit("[!] No bot tokens found (BOT_TOKEN1/2/3)")
+
+    for client, token in zip(CLIENTS, BOT_TOKENS):
+        await client.start(bot_token=token)
+        me = await client.get_me()
+        log.info(f"✅ Logged in as @{me.username}")
+
     load_modules()
     log.info(f"🚀 Starting {len(CLIENTS)} client(s)...")
     await asyncio.gather(*[c.run_until_disconnected() for c in CLIENTS])
