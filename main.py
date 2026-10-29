@@ -26,18 +26,26 @@ def load_modules():
         except Exception as e:
             log.exception(f"❌ Failed: {mod_name} → {e}")
 
+async def start_client(client, token):
+    await client.start(bot_token=token)
+    me = await client.get_me()
+    log.info(f"✅ Logged in as @{me.username}")
+    return client
+
 async def main():
     if not CLIENTS:
         raise SystemExit("[!] No bot tokens found (BOT_TOKEN1/2/3)")
 
-    for client, token in zip(CLIENTS, BOT_TOKENS):
-        await client.start(bot_token=token)
-        me = await client.get_me()
-        log.info(f"✅ Logged in as @{me.username}")
+    # Saare clients ko parallel mein start karein
+    await asyncio.gather(*[start_client(c, t) for c, t in zip(CLIENTS, BOT_TOKENS)])
 
+    # Modules load karein
     load_modules()
-    log.info(f"🚀 Starting {len(CLIENTS)} client(s)...")
-    await asyncio.gather(*[c.run_until_disconnected() for c in CLIENTS])
+
+    log.info(f"🚀 Bot is now running with {len(CLIENTS)} client(s)...")
+    
+    # Event loop ko zinda rakhein (yeh run_until_disconnected se better hai)
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())
