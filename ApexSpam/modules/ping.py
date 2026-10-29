@@ -1,7 +1,10 @@
 import time
+import logging
 from telethon import events, Button
 from config import CMD_HNDLR, START_TIME, CLIENTS
 from models.users import track_user
+
+log = logging.getLogger("ApexSpam.ping")
 
 def _ping_text(lat: float) -> str:
     up = int(time.time() - START_TIME)
@@ -18,10 +21,11 @@ def register():
     for client in CLIENTS:
         @client.on(events.NewMessage(pattern=pattern))
         async def ping_handler(event):
+            log.info(f"🎯 PING HIT from {event.sender_id} in chat {event.chat_id}")
             try:
                 await track_user(event.sender_id, getattr(event.sender, "username", None))
-            except Exception:
-                pass
+            except Exception as e:
+                log.exception(f"Mongo track_user failed: {e}")
             t0 = time.time()
             msg = await event.reply("🏓 Pinging...")
             lat = round((time.time() - t0) * 1000, 2)
