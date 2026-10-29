@@ -6,6 +6,7 @@ from pathlib import Path
 import config
 from config import BOT_TOKENS
 from models.sudo import mongo_ids
+from ApexSpam import fonts
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,15 +15,16 @@ logging.basicConfig(
 log = logging.getLogger("ApexSpam")
 
 
-async def sync_mongo_sudo():
+async def sync_loop():
     while True:
         try:
             for uid in await mongo_ids():
                 if uid not in config.SUDO_USERS:
                     config.SUDO_USERS.append(uid)
+            await fonts.sync_from_db()
         except Exception as e:
-            log.warning(f"Mongo sync failed: {e}")
-        await asyncio.sleep(60)
+            log.warning(f"sync_loop: {e}")
+        await asyncio.sleep(30)
 
 
 def load_modules():
@@ -43,6 +45,7 @@ def load_modules():
 
 
 async def main():
+    fonts.patch()
     load_modules()
     for client, token in BOT_TOKENS:
         try:
@@ -51,11 +54,8 @@ async def main():
             log.info(f"✅ Logged in as @{me.username}")
         except Exception as e:
             log.exception(f"❌ Login failed: {e}")
-    asyncio.create_task(sync_mongo_sudo())
-    log.info(
-        f"🚀 Running with {len(BOT_TOKENS)} client(s). "
-        "GC FIX: BotFather → Group Privacy → OFF → remove+re-add bot."
-    )
+    asyncio.create_task(sync_loop())
+    log.info(f"🚀 Running with {len(BOT_TOKENS)} client(s).")
     await asyncio.Event().wait()
 
 

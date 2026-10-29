@@ -1,8 +1,8 @@
-"""Apex Spam X — ping + reboot (premium HTML)."""
+"""Apex Spam X — ping + reboot."""
 import time
 from telethon import events
 from ApexSpam import HNDLR, OWNER_ID, START_TIME, HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS
-from ApexSpam.ui import header, quote, kv
+from ApexSpam.ui import header, quote, kv, divider
 
 
 def register():
@@ -20,9 +20,11 @@ def register():
                 + quote(
                     f"{kv('Latency', f'{lat} ms')}\n"
                     f"{kv('Uptime', f'{h}h {m}m {s}s')}\n"
-                    f"{kv('Status', '✅ Online')}",
+                    f"{kv('Status', '✅ Online')}\n"
+                    f"{kv('Engine', 'Apex Spam X')}",
                     expandable=True,
                 )
+                + f"\n\n{divider()}\n<i>All systems normal</i>"
             )
             await msg.edit(text, parse_mode="html")
 
@@ -32,7 +34,8 @@ def register():
                 return
             if not HEROKU_APP_NAME or not HEROKU_API_KEY:
                 return await e.reply(
-                    f"{header('reboot', '⚠️')}\n\n" + quote("Missing <code>HEROKU_APP_NAME</code> / <code>HEROKU_API_KEY</code>"),
+                    f"{header('reboot', '⚠️')}\n\n"
+                    + quote("Missing <code>HEROKU_APP_NAME</code> / <code>HEROKU_API_KEY</code>"),
                     parse_mode="html",
                 )
             try:
@@ -40,9 +43,13 @@ def register():
                 h = heroku3.from_key(HEROKU_API_KEY)
                 app = h.app(HEROKU_APP_NAME)
                 await e.reply(
-                    f"{header('rebooting', '♻️')}\n\n" + quote(f"{kv('App', HEROKU_APP_NAME)}"),
+                    f"{header('rebooting', '♻️')}\n\n"
+                    + quote(f"{kv('App', HEROKU_APP_NAME)}\n\n<i>Heroku API restart...</i>"),
                     parse_mode="html",
                 )
                 app.restart()
             except Exception as err:
-                await e.reply(f"{header('reboot', '❌')}\n\n" + quote(str(err)), parse_mode="html")
+                await e.reply(
+                    f"{header('reboot', '❌')}\n\n" + quote(str(err)),
+                    parse_mode="html",
+                )

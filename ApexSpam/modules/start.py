@@ -1,10 +1,13 @@
-from io import BytesIO
+import logging
 import time
+from io import BytesIO
 
 from telethon import events, Button
 from ApexSpam import HNDLR, START_TIME, CLIENTS
 from ApexSpam.ui import header, quote, kv, divider, link_user
 from models.bot_settings import get_value
+
+log = logging.getLogger("ApexSpam.start")
 
 DEFAULT_CAPTION = "{header}\n\n{greet}\n\n{q1}\n\n{q2}\n\n{meta}"
 
@@ -16,7 +19,7 @@ BUTTONS = [
 ]
 
 
-async def _build(e, bot_username: str) -> str:
+async def _build(e, bot_username):
     up = int(time.time() - START_TIME)
     h, r = divmod(up, 3600)
     m, s = divmod(r, 60)
@@ -36,6 +39,30 @@ async def _build(e, bot_username: str) -> str:
     )
 
 
+async def _send_start(e, text):
+    pic = None
+    ext = "png"
+    try:
+        pic = await get_value("start_pic")
+        ext = await get_value("start_pic_ext") or "png"
+        log.info(f"start: pic={'yes' if pic else 'no'} size={len(pic) if pic else 0}")
+    except Exception as ex:
+        log.exception(f"start: get_value failed: {ex}")
+        pic = None
+
+    if pic:
+        try:
+            stream = BytesIO(bytes(pic))
+            stream.name = f"start.{ext}"
+            await e.reply(text, file=stream, buttons=BUTTONS, parse_mode="html")
+            log.info("start: photo sent OK")
+            return
+        except Exception as ex:
+            log.exception(f"start: photo failed: {ex}")
+
+    await e.reply(text, buttons=BUTTONS, parse_mode="html")
+
+
 def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=r"/start(?: |$)"))
@@ -44,14 +71,7 @@ def register():
                 return
             me = await e.client.get_me()
             text = await _build(e, me.username or "bot")
-            pic = await get_value("start_pic")
-            try:
-                if pic:
-                    await e.reply(file=BytesIO(pic), caption=text, buttons=BUTTONS, parse_mode="html")
-                else:
-                    await e.reply(text, buttons=BUTTONS, parse_mode="html")
-            except Exception:
-                await e.reply(text, buttons=BUTTONS, parse_mode="html")
+            await _send_start(e, text)
 
         @c.on(events.CallbackQuery(data=b"about_btn"))
         async def about(e):

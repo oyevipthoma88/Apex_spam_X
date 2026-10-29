@@ -1,6 +1,6 @@
 from telethon import events
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
-from ApexSpam.ui import header, kv
+from ApexSpam.ui import header, quote, kv, divider
 from models.sudo import add_sudo, remove_sudo, mongo_ids
 
 
@@ -30,18 +30,18 @@ def register():
             if not uid:
                 return await e.reply(
                     f"{header('addsudo', '⚠️')}\n\n"
-                    f"{kv('Usage', f'{HNDLR}addsudo <id|reply|@user>')}\n"
-                    f"{kv('Perm', 'Owner')}",
-                    parse_mode="md",
+                    + quote(f"<b>Usage</b> : <code>{HNDLR}addsudo ID</code>\n"
+                            f"<b>Or</b>    : reply to a user"),
+                    parse_mode="html",
                 )
             await add_sudo(uid, e.sender_id)
             await e.reply(
                 f"{header('sudo added', '✅')}\n\n"
-                f"{kv('User', uid)}\n"
-                f"{kv('Store', 'MongoDB + Env')}\n"
-                f"{kv('By', e.sender_id)}\n\n"
-                "_Access granted._",
-                parse_mode="md",
+                + quote(
+                    f"{kv('User', uid)}\n{kv('Store', 'MongoDB + Env')}\n{kv('By', e.sender_id)}",
+                    expandable=True,
+                ),
+                parse_mode="html",
             )
 
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}delsudo(?: |$)"))
@@ -53,18 +53,17 @@ def register():
             if not uid:
                 return await e.reply(
                     f"{header('delsudo', '⚠️')}\n\n"
-                    f"{kv('Usage', f'{HNDLR}delsudo <id|reply|@user>')}",
-                    parse_mode="md",
+                    + quote(f"<b>Usage</b> : <code>{HNDLR}delsudo ID</code>"),
+                    parse_mode="html",
                 )
             ok = await remove_sudo(uid)
+            status = "Removed" if ok else "Not in DB"
             emoji = "🗑️" if ok else "ℹ️"
-            status = "Removed" if ok else "Not found"
             await e.reply(
                 f"{header('sudo removed', emoji)}\n\n"
-                f"{kv('User', uid)}\n"
-                f"{kv('Status', status)}\n\n"
-                "_Access revoked._" if ok else "_No change._",
-                parse_mode="md",
+                + quote(f"{kv('User', uid)}\n{kv('Status', status)}", expandable=True)
+                + f"\n\n{divider()}\n<i>{'Access revoked.' if ok else 'No change.'}</i>",
+                parse_mode="html",
             )
 
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}listsudo(?: |$)"))
@@ -73,12 +72,10 @@ def register():
                 return
             ids = await mongo_ids()
             combined = sorted(set(ids) | set(SUDO_USERS))
-            body = "\n".join(f"│  ◈ `{i}`" for i in combined) or "│  _none_"
+            body = "\n".join(f"  ◈ <code>{i}</code>" for i in combined) or "  <i>none</i>"
             await e.reply(
                 f"{header('sudo list', '🔐')}\n\n"
-                f"╭─〔 **USERS ({len(combined)})** 〕─╮\n"
-                f"{body}\n"
-                "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
-                "_Union of MongoDB + SUDO_USERS env._",
-                parse_mode="md",
+                + quote(f"<b>Total</b>  :  <code>{len(combined)}</code>")
+                + f"\n\n{body}",
+                parse_mode="html",
             )
