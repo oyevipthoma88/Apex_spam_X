@@ -1,5 +1,5 @@
 from telethon import events, Button
-from ApexSpam import HNDLR, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10
+from ApexSpam import HNDLR, CLIENTS
 from ApexSpam.ui import header
 
 MAIN = (
@@ -30,22 +30,24 @@ PAGES = {
         f"`{HNDLR}hrraid`  `{HNDLR}shayriraid`\n"
         f"`{HNDLR}abuse`   `{HNDLR}flirt`\n"
         f"`{HNDLR}hraid`   `{HNDLR}bspam`\n\n"
-        f"**Format** : `<cmd> <count> <user|reply>`\n"
+        f"**Format** : `CMD COUNT TARGET`\n"
+        f"**Target** : `@user` ya reply\n"
         f"**Perm**   : `Sudo / Owner`"
     ),
     "help_spam": (
         f"{header('spam', '💬')}\n\n"
-        f"`{HNDLR}spam <count> <text|reply>`\n"
-        f"`{HNDLR}echo <text>`\n"
-        f"`{HNDLR}emoji <emoji> <count>`\n"
-        f"`{HNDLR}tagall <msg>`\n"
-        f"`{HNDLR}gcast <text>`\n\n"
+        f"`{HNDLR}spam COUNT TEXT`\n"
+        f"`{HNDLR}spam COUNT` (reply)\n"
+        f"`{HNDLR}echo` (reply to user)\n"
+        f"`{HNDLR}emoji EMOJI COUNT`\n"
+        f"`{HNDLR}tagall MESSAGE`\n"
+        f"`{HNDLR}gcast TEXT`\n\n"
         f"**Perm** : `Sudo / Owner`"
     ),
     "help_extra": (
         f"{header('extra', '🛠️')}\n\n"
         f"`{HNDLR}ping`      —  latency\n"
-        f"`{HNDLR}apxping`   —  premium latency card\n"
+        f"`{HNDLR}apxping`   —  premium latency\n"
         f"`{HNDLR}alive`     —  alive card\n"
         f"`{HNDLR}id`        —  user/chat id\n"
         f"`{HNDLR}join`      —  join chat\n"
@@ -55,13 +57,17 @@ PAGES = {
     "help_admin": (
         f"{header('admin', '🛡️')}\n\n"
         f"`{HNDLR}axlogs`    —  heroku logs file\n"
-        f"`{HNDLR}axreboot`  —  heroku restart\n\n"
+        f"`{HNDLR}axreboot`  —  heroku restart\n"
+        f"`{HNDLR}logs`      —  legacy logs\n"
+        f"`{HNDLR}reboot`    —  legacy reboot\n\n"
         f"**Perm** : `Owner`"
     ),
     "help_sudo": (
         f"{header('sudo', '🔐')}\n\n"
-        f"`{HNDLR}addsudo <id|reply|@u>`\n"
-        f"`{HNDLR}delsudo <id|reply|@u>`\n"
+        f"`{HNDLR}addsudo ID`\n"
+        f"`{HNDLR}addsudo @user`\n"
+        f"`{HNDLR}addsudo` (reply)\n"
+        f"`{HNDLR}delsudo ID`\n"
         f"`{HNDLR}listsudo`\n\n"
         "_MongoDB + env union._"
     ),
@@ -69,7 +75,7 @@ PAGES = {
 
 
 def register():
-    for c in [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10]:
+    for c in CLIENTS:
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}help(?: |$)"))
         async def help_cmd(e):
             await e.reply(MAIN, buttons=MAIN_BTNS, parse_mode="md")
@@ -80,10 +86,13 @@ def register():
             if key in PAGES:
                 await e.reply(PAGES[key], parse_mode="md")
 
+        def _make_cb(txt):
+            async def cb(e):
+                await e.edit(txt, buttons=[[Button.inline("« Back", data="help_back")]], parse_mode="md")
+            return cb
+
         for key, txt in PAGES.items():
-            @c.on(events.CallbackQuery(data=key.encode()))
-            async def cb(e, _t=txt):
-                await e.edit(_t, buttons=[[Button.inline("« Back", data="help_back")]], parse_mode="md")
+            c.on(events.CallbackQuery(data=key.encode()))(_make_cb(txt))
 
         @c.on(events.CallbackQuery(data=b"help_back"))
         async def back(e):

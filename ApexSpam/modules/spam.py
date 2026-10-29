@@ -1,4 +1,4 @@
-## © @ITSZApex
+
 import asyncio
 from ApexSpam.data import GROUP, PORMS
 from config import X1, X2, X3, X4, X5 , X6, X7, X8, X9, X10, SUDO_USERS, CMD_HNDLR as hl
@@ -11,7 +11,7 @@ async def gifspam(e, smex):
         await e.client(
             functions.messages.SaveGifRequest(
                 id=types.InputDocument(
-                    id=sandy.media.document.id,
+                    id=mk.media.document.id,
                     access_hash=smex.media.document.access_hash,
                     file_reference=smex.media.document.file_reference,
                 ),

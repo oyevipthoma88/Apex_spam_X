@@ -32,15 +32,20 @@ def load_modules():
             continue
         mod_name = f"ApexSpam.modules.{path.stem}"
         try:
-            importlib.import_module(mod_name)
-            log.info(f"✅ Loaded: {mod_name}")
+            mod = importlib.import_module(mod_name)
+            # STRANGER-style modules auto-register via decorators.
+            # Premium modules expose register() — we MUST call it.
+            if hasattr(mod, "register") and callable(mod.register):
+                mod.register()
+                log.info(f"✅ Loaded+registered: {mod_name}")
+            else:
+                log.info(f"✅ Loaded: {mod_name}")
         except Exception as e:
             log.exception(f"❌ Failed: {mod_name} → {e}")
 
 
 async def main():
-    load_modules()  # Apex Spam X style: handlers registered at import
-
+    load_modules()
     for client, token in BOT_TOKENS:
         try:
             await client.start(bot_token=token)
@@ -48,7 +53,6 @@ async def main():
             log.info(f"✅ Logged in as @{me.username}")
         except Exception as e:
             log.exception(f"❌ Login failed for one client: {e}")
-
     asyncio.create_task(sync_mongo_sudo())
     log.info(f"🚀 Running with {len(BOT_TOKENS)} active client(s)")
     await asyncio.Event().wait()

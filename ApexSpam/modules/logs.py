@@ -1,4 +1,3 @@
-# © @ITSZApex
 import asyncio
 import heroku3
 

@@ -1,4 +1,3 @@
-# © @ITSZApex
 import asyncio
 from random import choice
 from telethon import events

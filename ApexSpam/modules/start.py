@@ -1,5 +1,5 @@
 from telethon import events, Button
-from ApexSpam import HNDLR, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10
+from ApexSpam import HNDLR, CLIENTS
 
 START_BUTTON = [
     [Button.inline("⚡ C O M M A N D S", data="help_back")],
@@ -11,16 +11,16 @@ START_BUTTON = [
 
 
 def register():
-    for c in [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10]:
+    for c in CLIENTS:
         @c.on(events.NewMessage(pattern=r"/start(?: |$)"))
         async def start(e):
             if not e.is_private:
                 return
             me = await e.client.get_me()
             text = (
-                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "╭━━━━━━━━━━━━━━━━━━━━╮\n"
                 "   ⚡  **A P E X   S P A M   X**  ⚡\n"
-                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
                 f"**Hey** [{e.sender.first_name}](tg://user?id={e.sender.id}) 👋\n"
                 "_**Welcome to the ultimate raid engine.**_\n\n"
                 "╭─〔 **⚡ CAPABILITIES** 〕─╮\n"
@@ -40,9 +40,9 @@ def register():
         async def about(e):
             me = await e.client.get_me()
             text = (
-                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "╭━━━━━━━━━━━━━━━━━━━━╮\n"
                 "   ⚡  **A B O U T**  ⚡\n"
-                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
                 "◈ **Name**     :  `Apex Spam X`\n"
                 f"◈ **Bot**      :  @{me.username}\n"
                 f"◈ **Prefix**   :  `{HNDLR}`\n"
@@ -63,9 +63,9 @@ def register():
             h, r = divmod(up, 3600)
             m, s = divmod(r, 60)
             text = (
-                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "╭━━━━━━━━━━━━━━━━━━━━╮\n"
                 "   🛡️  **S T A T U S**  🛡️\n"
-                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
                 f"◈ **Uptime**   :  `{h}h {m}m {s}s`\n"
                 "◈ **Status**   :  `✅ Online`\n"
                 "◈ **Engine**   :  `Healthy`\n"
@@ -78,9 +78,9 @@ def register():
         async def back(e):
             me = await e.client.get_me()
             text = (
-                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "╭━━━━━━━━━━━━━━━━━━━━╮\n"
                 "   ⚡  **A P E X   S P A M   X**  ⚡\n"
-                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
                 "**Welcome back!** 👋\n"
                 f"**Prefix** : `{HNDLR}`    **Bot** : @{me.username}"
             )
