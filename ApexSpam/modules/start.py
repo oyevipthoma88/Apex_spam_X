@@ -1,45 +1,87 @@
-# © @ITSZSHUKLA
-from telethon import __version__, events, Button
-from config import X1, X2, X3, X4, X5, X6, X7, X8, X9, X10
-
+from telethon import events, Button
+from ApexSpam import HNDLR, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10
 
 START_BUTTON = [
-    [
-        Button.inline("𝗛𝗘𝗟𝗣 𝗔𝗡𝗗 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦", data="help_back")
-    ],
-    [
-        Button.url("𝗨𝗣𝗗𝗔𝗧𝗘𝗦", "https://t.me/ITSZSHUKLA"),
-        Button.url("𝗦𝗨𝗣𝗣𝗢𝗥𝗧", "https://t.me/mastiwithfriendsxd")
-    ],
-    [
-        Button.url("𝗦𝗛𝗜𝗩𝗔𝗡𝗦𝗛", "https://t.me/ITSZ_SHIVANSH"),
-        Button.url("𝗥𝗘𝗣𝗢", "https://github.com/itzshukla/STRANGER-SPAM-X/fork")
-    ],
-    [
-        Button.url("𝗝𝗢𝗜𝗡 𝗙𝗢𝗥 𝗦𝗨𝗗𝗢", "https://t.me/STRANGERXWORLD")
-    ]
+    [Button.inline("⚡ C O M M A N D S", data="help_back")],
+    [Button.inline("📖 About", data="about_btn"),
+     Button.inline("🛡️ Status", data="status_btn")],
+    [Button.url("📢 Channel", "https://t.me/ApexSpamXSupport"),
+     Button.url("💬 Support", "https://t.me/ApexSpamXSupport")],
 ]
 
 
-@X1.on(events.NewMessage(pattern="/start"))
-@X2.on(events.NewMessage(pattern="/start"))
-@X3.on(events.NewMessage(pattern="/start"))
-@X4.on(events.NewMessage(pattern="/start"))
-@X5.on(events.NewMessage(pattern="/start"))
-@X6.on(events.NewMessage(pattern="/start"))
-@X7.on(events.NewMessage(pattern="/start"))
-@X8.on(events.NewMessage(pattern="/start"))
-@X9.on(events.NewMessage(pattern="/start"))
-@X10.on(events.NewMessage(pattern="/start"))
-async def start(event):
-    if event.is_private:
-        ShuklaBot = await event.client.get_me()
-        bot_name = ShuklaBot.first_name
-        bot_id = ShuklaBot.id
-        TEXT = f"**•┈┈─┈┈─┈┈─┈┈─┈┈─┈┈─┈┈•\n❍ 𝗛𝗘𝗬 ‣ [{event.sender.first_name}](tg://user?id={event.sender.id}),\n•┈┈─┈┈─┈┈─┈┈─┈┈─┈┈─┈┈•\n❍ 𝗜 𝗔𝗠 ‣ [{bot_name}](tg://user?id={bot_id})\n•┈┈─┈┈─┈┈─┈┈─┈┈─┈┈─┈┈•\n● ɪ ᴀᴍ ᴠᴇʀʏ ᴘᴏᴡᴇʀғᴜʟ sᴘᴀᴍ ʙᴏᴛ ●\n•┈┈─┈┈─┈┈─┈┈─┈┈─┈┈─┈┈•\n⊚ ᴜɴʟɪᴍɪᴛᴇᴅ ʀᴀɪᴅ\n⊚ ᴜɴʟɪᴍɪᴛᴇᴅ sᴘᴀᴍ \n•┈┈─┈┈─┈┈─┈┈─┈┈─┈┈─┈┈•\n⦿ 24x7 ʀᴜɴ|[sᴛʀᴀɴɢᴇʀ](https://t.me/StrangerAssociation)\n•┈┈─┈┈─┈┈─┈┈─┈┈─┈┈─┈┈•**"
-        await event.client.send_file(
-            event.chat_id,
-            "https://telegra.ph/file/05522e13c97752efe5e75.png",
-            caption=TEXT,
-            buttons=START_BUTTON
-        )
+def register():
+    for c in [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10]:
+        @c.on(events.NewMessage(pattern=r"/start(?: |$)"))
+        async def start(e):
+            if not e.is_private:
+                return
+            me = await e.client.get_me()
+            text = (
+                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "   ⚡  **A P E X   S P A M   X**  ⚡\n"
+                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                f"**Hey** [{e.sender.first_name}](tg://user?id={e.sender.id}) 👋\n"
+                "_**Welcome to the ultimate raid engine.**_\n\n"
+                "╭─〔 **⚡ CAPABILITIES** 〕─╮\n"
+                "│  ◈  Unlimited **Raid**\n"
+                "│  ◈  Mass **Spam**\n"
+                "│  ◈  Mongo **Sudo**\n"
+                "│  ◈  24×7 **Uptime**\n"
+                "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
+                f"**➤ Prefix**   :  `{HNDLR}`\n"
+                f"**➤ Bot**      :  @{me.username}\n"
+                "**➤ Status**   :  `✅ Online`\n\n"
+                "_Tap below to explore_ 👇"
+            )
+            await e.reply(text, buttons=START_BUTTON, parse_mode="md")
+
+        @c.on(events.CallbackQuery(data=b"about_btn"))
+        async def about(e):
+            me = await e.client.get_me()
+            text = (
+                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "   ⚡  **A B O U T**  ⚡\n"
+                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                "◈ **Name**     :  `Apex Spam X`\n"
+                f"◈ **Bot**      :  @{me.username}\n"
+                f"◈ **Prefix**   :  `{HNDLR}`\n"
+                "◈ **Engine**   :  `Telethon`\n"
+                "◈ **Database** :  `MongoDB`\n"
+                "◈ **Deploy**   :  `Heroku`\n\n"
+                "╭─〔 **👑 CREDITS** 〕─╮\n"
+                "│  Developer : **@oyevipthoma88**\n"
+                "╰━━━━━━━━━━━━━━━━━━━━╯"
+            )
+            await e.edit(text, buttons=[[Button.inline("« Back", data="start_back")]], parse_mode="md")
+
+        @c.on(events.CallbackQuery(data=b"status_btn"))
+        async def status(e):
+            import time
+            from ApexSpam import START_TIME
+            up = int(time.time() - START_TIME)
+            h, r = divmod(up, 3600)
+            m, s = divmod(r, 60)
+            text = (
+                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "   🛡️  **S T A T U S**  🛡️\n"
+                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                f"◈ **Uptime**   :  `{h}h {m}m {s}s`\n"
+                "◈ **Status**   :  `✅ Online`\n"
+                "◈ **Engine**   :  `Healthy`\n"
+                "◈ **Clients**  :  `Active`\n\n"
+                "_All systems operational._"
+            )
+            await e.edit(text, buttons=[[Button.inline("« Back", data="start_back")]], parse_mode="md")
+
+        @c.on(events.CallbackQuery(data=b"start_back"))
+        async def back(e):
+            me = await e.client.get_me()
+            text = (
+                "╭━━━━━━━━━━━━━━━━━━━╮\n"
+                "   ⚡  **A P E X   S P A M   X**  ⚡\n"
+                "╰━━━━━━━━━━━━━━━━━━━╯\n\n"
+                "**Welcome back!** 👋\n"
+                f"**Prefix** : `{HNDLR}`    **Bot** : @{me.username}"
+            )
+            await e.edit(text, buttons=START_BUTTON, parse_mode="md")

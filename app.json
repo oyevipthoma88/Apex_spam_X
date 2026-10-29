@@ -1,6 +1,6 @@
 {
   "name": "Apex Spam X",
-  "description": "STRANGER base + Mongo sudo + Heroku API",
+  "description": "Apex Spam X base + Mongo sudo + Heroku API",
   "repository": "https://github.com/oyevipthoma88/Apex_spam_X",
   "stack": "heroku-24",
   "buildpacks": [{ "url": "heroku/python" }],

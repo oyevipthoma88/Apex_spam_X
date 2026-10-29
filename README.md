@@ -1,54 +1,36 @@
-<### 🌷𝐒𝐓𝐑𝐀𝐍𝐆𝐄𝐑🌷
+# ⚡ Apex Spam X
 
-<!--
-**itzshukla/itzshukla** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+> Powerful Telegram multi-client raid & spam engine — Mongo sudo, Heroku ready.
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/oyevipthoma88/Apex_spam_X)
 
-<p align="center">
-    <b>ᴠɪsɪᴛᴏʀs</b><br>
- -->    <img align="middle" src="https://profile-counter.glitch.me/itzshukla/count.svg" />
-</p>
+## Features
+- ⚡ 10 parallel Telegram clients
+- 🔐 MongoDB-backed dynamic sudo (`.addsudo`)
+- 🛠️ 15+ raid commands (`.raid`, `.sraid`, `.loveraid`, …)
+- 💬 Mass spam / echo / emoji / tagall / gcast
+- 🎨 Premium inline UI (cards, dividers, buttons)
+- 📊 Live stats, logs, Heroku restart
 
-<h1 align="center"><b>⚡️𝐒𝐓𝐑𝐀𝐍𝐆𝐄𝐑 𝐒𝐏𝐀𝐌⚡️</b></h1>
+## Required Config Vars
+| Key | Description |
+|---|---|
+| `API_ID` | Telegram API ID |
+| `API_HASH` | Telegram API HASH |
+| `OWNER_ID` | Your Telegram user ID |
+| `MONGO_DB_URI` | MongoDB Atlas URI |
+| `BOT_TOKEN1` | Bot token (from @BotFather) |
 
-<h4 align="center">⚡️𝐓𝐇𝐄 𝐏𝐎𝐖𝐄𝐑𝐅𝐔𝐋 𝐒𝐏𝐀𝐌𝐁𝐎𝐓𝐒⚡️</h4>
+Optional: `BOT_TOKEN2…10`, `CMD_HNDLR=.`, `SUDO_USERS`, `HEROKU_APP_NAME`, `HEROKU_API_KEY`
 
-<p align="center"><a href="https://t.me/shiva_ansh_op"><img src="https://telegra.ph/file/05522e13c97752efe5e75.png" width="400"></a></p>
+## Deploy
+1. Click **Deploy to Heroku** above
+2. Fill config vars
+3. **Resources** → turn `worker` dyno ON
+4. DM your bot `/start`
 
+## Prefix
+`.help`, `.ping`, `.raid`, `.addsudo`
 
-> ⭐️ Thanks to everyone for using THIS STRANGER SPAM BOT, That is the greatest pleasure we have !
-
-<br>
-
-- ⚠️ Do not forget to fork this repo. Else error can occur in deployment.
-
-# ᴅᴇᴘʟᴏʏᴍᴇɴᴛ
-
-
-<details>
-<summary><b>ᴅᴇᴘʟᴏʏ ᴛᴏ ʜᴇʀᴏᴋᴜ</b></summary>
-<br>
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https://github.com/itzshukla/STRANGER-SPAM-X)
-  
-</details>
-
-
-<details>
-<summary><b>ᴅᴇᴘʟᴏʏ ᴛᴏ ᴋᴏʏᴇʙ</b></summary>
-<br>
-
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=&branch=name&name=thealtron)
-  
-</details>
-
-
-# Rᴇǫᴜɪʀᴇᴍᴇɴᴛs
-
-- `10 BOT-TOKENS`
-
-- `OWNER-ID`
-
-
-# ꜱᴜᴘᴘᴏʀᴛ ✨
-<a href="https://t.me/MASTIWITHFRIENDSXD"><img src="https://img.shields.io/badge/Join-Telegram%20Channel-red.svg?logo=Telegram"></a>
+## Credits
+**Developer:** [@oyevipthoma88](https://github.com/oyevipthoma88)

@@ -1,4 +1,4 @@
-# © @ITSZSHUKLA
+# © @ITSZApex
 import asyncio
 import heroku3
 
@@ -42,7 +42,7 @@ async def logs(legend):
         start = datetime.now()
         fetch = await legend.reply(f"__Fetching Logs...__")
 
-        with open("SHUKLALogs.txt", "w") as logfile:
+        with open("ApexLogs.txt", "w") as logfile:
             logfile.write("⚡ ™°‌𝐒 𝐓 𝐑 𝐀 𝐍 𝐆 𝐄 𝐑 ⚡ [ Bot Logs ]\n\n" + logs)
 
         end = datetime.now()
@@ -50,7 +50,7 @@ async def logs(legend):
         await asyncio.sleep(1)
 
         try:
-            await X1.send_file(legend.chat_id, "SHUKLALogs.txt", caption=f"⚡ **SHUKLABOTS LOGS** ⚡\n  » **ᴛɪᴍᴇ ᴛᴀᴋᴇɴ:** `{ms} ꜱᴇᴄᴏɴᴅꜱ`")
+            await X1.send_file(legend.chat_id, "ApexLogs.txt", caption=f"⚡ **ApexSpamX LOGS** ⚡\n  » **ᴛɪᴍᴇ ᴛᴀᴋᴇɴ:** `{ms} ꜱᴇᴄᴏɴᴅꜱ`")
             await fetch.delete()
         except Exception as e:
             await fetch.edit(f"An Exception Occured!\n\n**ERROR:** {str(e)}")

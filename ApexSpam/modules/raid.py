@@ -1,9 +1,9 @@
-# © @ITSZSHUKLA
+# © @ITSZApex
 import asyncio
 from random import choice
 from telethon import events
 from config import X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, SUDO_USERS, OWNER_ID, CMD_HNDLR as hl
-from ApexSpam.data import RAID, REPLYRAID, SHASHANK, LOVERAID, SRAID, CRAID, QRAID, SHASHANK
+from ApexSpam.data import RAID, REPLYRAID, APEX_OWNER, LOVERAID, SRAID, CRAID, QRAID, APEX_OWNER
 
 REPLY_RAID = []
 
@@ -32,7 +32,7 @@ async def raid(e):
             uid = entity.id
 
         try:
-            if uid in SHASHANK:
+            if uid in APEX_OWNER:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴅᴇᴠᴇʟᴏᴘᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ✨🥀")
             elif uid == OWNER_ID:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴏᴡɴᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ🥀")
@@ -97,7 +97,7 @@ async def rraid(e):
 
         try:
             user_id = entity.id
-            if user_id in SHASHANK:
+            if user_id in APEX_OWNER:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴅᴇᴠᴇʟᴏᴘᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ✨🥀")
             elif user_id == OWNER_ID:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴏᴡɴᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ🥀")
@@ -243,7 +243,7 @@ async def craid(e):
             uid = entity.id
 
         try:
-            if uid in SHASHANK:
+            if uid in APEX_OWNER:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴅᴇᴠᴇʟᴏᴘᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ✨🥀")
             elif uid == OWNER_ID:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴏᴡɴᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ🥀")
@@ -288,7 +288,7 @@ async def qraid(e):
             uid = entity.id
 
         try:
-            if uid in SHASHANK:
+            if uid in APEX_OWNER:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴅᴇᴠᴇʟᴏᴘᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ✨🥀")
             elif uid == OWNER_ID:
                 await e.reply("ɴᴏ, ᴛʜɪꜱ ɢᴜʏ ɪꜱ ᴏᴡɴᴇʀ ᴏꜰ ᴛʜᴇꜱᴇ ʙᴏᴛꜱ🥀")

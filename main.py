@@ -39,7 +39,7 @@ def load_modules():
 
 
 async def main():
-    load_modules()  # STRANGER style: handlers registered at import
+    load_modules()  # Apex Spam X style: handlers registered at import
 
     for client, token in BOT_TOKENS:
         try:

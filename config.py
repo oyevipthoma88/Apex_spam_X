@@ -23,7 +23,7 @@ SUDO_USERS = [
 if OWNER_ID and OWNER_ID not in SUDO_USERS:
     SUDO_USERS.append(OWNER_ID)
 
-# Export BOT_TOKEN (singular) + BOT_TOKEN2..10 for STRANGER module compat
+# Export BOT_TOKEN (singular) + BOT_TOKEN2..10 for Apex Spam X module compat
 BOT_TOKEN = os.getenv("BOT_TOKEN1", "").strip() or os.getenv("BOT_TOKEN", "").strip()
 for _i in range(2, 11):
     globals()[f"BOT_TOKEN{_i}"] = os.getenv(f"BOT_TOKEN{_i}", "").strip()
