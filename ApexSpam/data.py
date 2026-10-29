@@ -1,12 +1,5 @@
-RAID = [
-    "tera pura system hil jayega aaj",
-    "raid mode activated 💀",
-    "bhag ja warna late ho jayega",
-]
-SRAID = [
-    "shayri sun le warna raid shuru",
-    "dil se bura lag jayega",
-]
+RAID = ["tera pura system hil jayega aaj", "raid mode activated 💀", "bhag ja warna late ho jayega"]
+SRAID = ["shayri sun le warna raid shuru", "dil se bura lag jayega"]
 CRAID = ["custom raid 1", "custom raid 2"]
 QRAID = ["quote raid 1", "quote raid 2"]
 LOVERAID = ["pyar barsa raha hoon", "dil le ja meri jaan"]
@@ -15,6 +8,7 @@ SHAYRI_RAID = ["shayri line 1", "shayri line 2"]
 ABUSE = ["noob saala", "game khelna seekh", "bot se panga mat le"]
 FLIRT = ["tu bohot cute hai", "smile toh de zara", "dil de de"]
 HRAID = ["happy birthday 🎉", "aaj tera din hai", "party kab de raha"]
+BSPAM = ["birthday spam 🎂", "aaj tera birthday hai", "cake kaat"]
 GM = ["good morning 🌞", "uth ja bhai", "subah ho gayi"]
 GA = ["good afternoon ☀️", "khana kha le", "aaram kar"]
 GN = ["good night 🌙", "so ja ab", "meethi neend"]

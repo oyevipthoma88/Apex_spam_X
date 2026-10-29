@@ -4,9 +4,8 @@ from ApexSpam.patterns import cmd
 from ApexSpam.raid_engine import execute_raid
 from ApexSpam.data import ABUSE
 
-
 def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=cmd("abuse"), incoming=True))
-        async def h(e):
-            await execute_raid(e, ABUSE, "abuse")
+        async def h(e, _v=ABUSE, _n="abuse"):
+            await execute_raid(e, _v, _n, "abuse")

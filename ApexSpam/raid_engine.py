@@ -3,15 +3,29 @@ from random import choice
 from telethon.errors import FloodWaitError
 from config import CMD_HNDLR, OWNER_ID
 from models.sudo import is_sudo
+from models.raid import get_raid_messages
 
 MAX_RAID = 200
+
 
 async def _has_perm(event) -> bool:
     if event.sender_id == OWNER_ID:
         return True
     return await is_sudo(event.sender_id)
 
-async def execute_raid(event, messages: list[str], cmd_name: str):
+
+async def _load_messages(category, fallback):
+    if category:
+        try:
+            msgs = await get_raid_messages(category)
+            if msgs:
+                return msgs
+        except Exception:
+            pass
+    return fallback
+
+
+async def execute_raid(event, fallback, cmd_name, category=None):
     if not await _has_perm(event):
         return
     parts = event.text.split(maxsplit=2)
@@ -42,6 +56,7 @@ async def execute_raid(event, messages: list[str], cmd_name: str):
     else:
         return await event.reply(usage, parse_mode="md")
 
+    messages = await _load_messages(category or cmd_name, fallback)
     mention = f"[{name}](tg://user?id={uid})"
     for _ in range(count):
         try:
