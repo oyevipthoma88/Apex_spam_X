@@ -1,5 +1,6 @@
-"""Apex Spam X — paged owner panel."""
+"""Apex Spam X — paged owner panel (error-safe)."""
 import logging
+
 from telethon import events
 from telethon.tl.functions.bots import SetBotInfoRequest
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
@@ -8,12 +9,12 @@ from ApexSpam import (
     HNDLR, OWNER_ID, CLIENTS, HEROKU_APP_NAME, HEROKU_API_KEY,
     USER_SESSION, API_ID, API_HASH,
 )
-from ApexSpam import roles, respond
-from ApexSpam.ui import bread, quote, kv, pill, table, footer, join_rows
-from ApexSpam.buttons import ib, ub, copy_btn, grid, nav
-from models.whitelist import add_gc, list_gcs
-from models.sudo import add_sudo, remove_sudo, all_records
-from models.admins import add_admin, remove_admin, list_admins
+from ApexSpam import respond
+from ApexSpam.ui import bread, quote, kv, pill, table, footer
+from ApexSpam.buttons import ib, copy_btn
+from models.whitelist import list_gcs
+from models.sudo import all_records
+from models.admins import list_admins
 
 log = logging.getLogger("ApexSpam.owner")
 PENDING = {}
@@ -37,6 +38,7 @@ async def _apply_name(name):
 async def _apply_bio(bio):
     from ApexSpam.fonts import asciify
     clean = asciify(bio)[:120]
+    stripped = clean != bio
     ok = 0
     for c in CLIENTS:
         try:
@@ -45,7 +47,7 @@ async def _apply_bio(bio):
             ok += 1
         except Exception as ex:
             log.warning(f"bio fail: {ex}")
-    return ok
+    return ok, clean, stripped
 
 
 async def _apply_pic(data):
@@ -72,39 +74,43 @@ async def _apply_pic(data):
 
 
 def _main():
-    body = f"{pill(f'{len(CLIENTS)} bots', 'ok')}\n{pill('online', 'ok')}"
-    return (
+    text = (
         f"{bread('owner', 'panel')}\n\n"
-        + quote(body, expandable=True)
+        + quote(f"{pill(f'{len(CLIENTS)} bots', 'ok')}\n{pill('online', 'ok')}", expandable=True)
         + f"\n{footer()}"
-    ), [
+    )
+    rows = [
         [ib("🎨 Appearance", b"opx:look", "primary"),
          ib("🛡️ Access", b"opx:acc", "primary")],
         [ib("⚙️ System", b"opx:sys", "primary"),
          ib("✖ Close", b"opx:close", "danger")],
     ]
+    return text, rows
 
 
 def _look():
-    return (
+    text = (
         f"{bread('owner', 'appearance')}\n\n"
         + quote("Update every connected bot.", expandable=True)
         + f"\n{footer()}"
-    ), [
+    )
+    rows = [
         [ib("✏️ Name", b"op_setname", "primary"),
          ib("📝 Bio", b"op_setbio", "primary")],
         [ib("🖼️ Photo", b"op_setpic", "primary"),
          ib("🎨 Start Pic", b"op_setstartpic", "success")],
         [ib("« Back", b"opx:main", "primary")],
     ]
+    return text, rows
 
 
 def _acc():
-    return (
+    text = (
         f"{bread('owner', 'access')}\n\n"
         + quote("Sudo chain: you can remove only users you added.", expandable=True)
         + f"\n{footer()}"
-    ), [
+    )
+    rows = [
         [ib("👤 + Admin", b"op_addadmin", "success"),
          ib("🚫 − Admin", b"op_deladmin", "danger")],
         [ib("🛡️ + Sudo", b"op_addsudo", "success"),
@@ -112,18 +118,21 @@ def _acc():
         [ib("📋 Lists", b"opx:lists", "primary"),
          ib("« Back", b"opx:main", "primary")],
     ]
+    return text, rows
 
 
 def _sys():
-    return (
+    text = (
         f"{bread('owner', 'system')}\n\n"
         + quote("Restart or fetch logs.", expandable=True)
         + f"\n{footer()}"
-    ), [
+    )
+    rows = [
         [ib("🔄 Restart", b"op_update", "primary"),
          ib("📜 Logs", b"op_logs", "primary")],
         [ib("« Back", b"opx:main", "primary")],
     ]
+    return text, rows
 
 
 async def _lists():
@@ -142,25 +151,16 @@ async def _lists():
         + table(["SUDO", "SRC"], s_rows)
     )
     ids = "\n".join(str(x["user_id"]) for x in sudos[:20])
-    btns = []
-    cb = copy_btn("📋 Copy sudo IDs", ids) if ids else None
-    if cb:
-        btns.append([cb])
-    btns.append([ib("« Back", b"opx:acc", "primary")])
-    return f"{bread('owner', 'lists')}\n\n{body}", join_rows(btns)
-
-
-def _text():
-    return _main()[0]
-
-
-def _buttons():
-    return _main()[1]
+    rows = []
+    if ids:
+        cb = copy_btn("📋 Copy sudo IDs", ids)
+        if cb:
+            rows.append([cb])
+    rows.append([ib("« Back", b"opx:acc", "primary")])
+    return f"{bread('owner', 'lists')}\n\n{body}", rows
 
 
 async def _page(action):
-    if action == "main":
-        return _main()
     if action == "look":
         return _look()
     if action == "acc":
@@ -181,26 +181,6 @@ def register():
             text, rows = _main()
             await e.reply(text, buttons=rows, parse_mode="html")
 
-        @c.on(events.CallbackQuery(pattern=r"opx:(\w+)"))
-        async def opx(e):
-            log.info(f"opx from {e.sender_id} data={e.data!r}")
-            if e.sender_id != OWNER_ID:
-                return await respond.ack(e, "Owner only", True)
-            action = e.pattern_match.group(1)
-                if isinstance(action, bytes):
-                    action = action.decode()
-            if action == "close":
-                await respond.ack(e)
-                try:
-                    await e.delete()
-                except Exception:
-                    pass
-                return
-            await respond.ack(e)
-            text, rows = await _page(action)
-            await respond.edit(e, text, rows)
-
-        # ── pending flows ──
         @c.on(events.CallbackQuery(data=b"owner_panel"))
         async def open_panel(e):
             log.info(f"owner_panel from {e.sender_id}")
@@ -213,46 +193,89 @@ def register():
                 log.exception(f"owner_panel failed: {ex}")
                 await respond.ack(e, f"Error: {str(ex)[:40]}", True)
 
+        @c.on(events.CallbackQuery(pattern=r"opx:(\w+)"))
+        async def opx(e):
+            if e.sender_id != OWNER_ID:
+                return await respond.ack(e, "Owner only", True)
+            try:
+                action = e.pattern_match.group(1)
+                if isinstance(action, bytes):
+                    action = action.decode()
+                log.info(f"opx action={action}")
+                if action == "close":
+                    await respond.ack(e)
+                    try:
+                        await e.delete()
+                    except Exception:
+                        pass
+                    return
+                await respond.ack(e)
+                text, rows = await _page(action)
+                await respond.edit(e, text, rows)
+            except Exception as ex:
+                log.exception(f"opx failed: {ex}")
+                await respond.ack(e, f"Error: {str(ex)[:40]}", True)
+
         @c.on(events.CallbackQuery(data=b"op_setname"))
         async def cb_setname(e):
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
-            m = await e.edit(f"{bread('owner', 'set name')}\n\n"
-                             + quote("Reply to this message with the new name."),
-                             parse_mode="html")
-            PENDING[e.chat_id] = ("setname", m.id)
-            await respond.ack(e, "Reply with name")
+            try:
+                m = await e.edit(
+                    f"{bread('owner', 'set name')}\n\n"
+                    + quote("Reply with <b>plain text</b> name.\n"
+                            "<i>Telegram bot names cannot use styled font.</i>"),
+                    parse_mode="html",
+                )
+                PENDING[e.chat_id] = ("setname", m.id)
+                await respond.ack(e, "Reply with name")
+            except Exception as ex:
+                log.exception(f"cb_setname: {ex}")
 
         @c.on(events.CallbackQuery(data=b"op_setbio"))
         async def cb_setbio(e):
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
-            m = await e.edit(f"{bread('owner', 'set bio')}\n\n"
-                             + quote("Reply to this message with the new bio."),
-                             parse_mode="html")
-            PENDING[e.chat_id] = ("setbio", m.id)
-            await respond.ack(e, "Reply with bio")
+            try:
+                m = await e.edit(
+                    f"{bread('owner', 'set bio')}\n\n"
+                    + quote("Reply with <b>plain text</b> bio."),
+                    parse_mode="html",
+                )
+                PENDING[e.chat_id] = ("setbio", m.id)
+                await respond.ack(e, "Reply with bio")
+            except Exception as ex:
+                log.exception(f"cb_setbio: {ex}")
 
         @c.on(events.CallbackQuery(data=b"op_setpic"))
         async def cb_setpic(e):
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
-            m = await e.edit(f"{bread('owner', 'set photo')}\n\n"
-                             + quote("Reply to this message with a photo."),
-                             parse_mode="html")
-            PENDING[e.chat_id] = ("setpic", m.id)
-            await respond.ack(e, "Reply with photo")
+            try:
+                m = await e.edit(
+                    f"{bread('owner', 'set photo')}\n\n"
+                    + quote("Reply with a photo."),
+                    parse_mode="html",
+                )
+                PENDING[e.chat_id] = ("setpic", m.id)
+                await respond.ack(e, "Reply with photo")
+            except Exception as ex:
+                log.exception(f"cb_setpic: {ex}")
 
         @c.on(events.CallbackQuery(data=b"op_setstartpic"))
         async def cb_setstartpic(e):
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
-            m = await e.edit(f"{bread('owner', 'set start pic')}\n\n"
-                             + quote("Reply to this message with a photo.\n"
-                                     "It stays saved after restart (MongoDB)."),
-                             parse_mode="html")
-            PENDING[e.chat_id] = ("setstartpic", m.id)
-            await respond.ack(e, "Reply with photo")
+            try:
+                m = await e.edit(
+                    f"{bread('owner', 'set start pic')}\n\n"
+                    + quote("Reply with a photo.\nStays saved after restart."),
+                    parse_mode="html",
+                )
+                PENDING[e.chat_id] = ("setstartpic", m.id)
+                await respond.ack(e, "Reply with photo")
+            except Exception as ex:
+                log.exception(f"cb_setstartpic: {ex}")
 
         @c.on(events.NewMessage())
         async def pending(e):
@@ -267,43 +290,56 @@ def register():
             if e.reply_to_msg_id != prompt_id:
                 return
             PENDING.pop(e.chat_id, None)
-
-            if action == "setname" and e.text:
-                ok, clean, stripped = await _apply_name(e.text[:64])
-                body = (
-                    f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
-                    f"{kv('Applied', clean)}\n"
-                    f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
-                )
-                if stripped:
-                    body += "\n\n<i>⚠️ Styled characters stripped — Telegram bot names must be plain ASCII.</i>"
-                await e.reply(f"{bread('owner', 'name')}\n\n" + quote(body),
-                              parse_mode="html")
-            elif action == "setbio" and e.text:
-                ok = await _apply_bio(e.text[:140])
-                await e.reply(f"{bread('owner', 'bio')}\n\n"
-                              + quote(f"{pill('Updated', 'ok')}\n{kv('Count', f'{ok}/{len(CLIENTS)}')}"),
-                              parse_mode="html")
-            elif action in ("setpic", "setstartpic"):
-                if not e.photo and not (e.document and "image" in (e.document.mime_type or "")):
-                    return await e.reply("❌ Not a photo.", parse_mode="html")
-                data = await e.download_media(file=bytes)
-                if not data:
-                    return await e.reply("❌ Download failed.", parse_mode="html")
-                if action == "setstartpic":
-                    from ApexSpam.modules.apexpic import _detect_ext
-                    from models.bot_settings import set_value
-                    ext = _detect_ext(data)
-                    await set_value("start_pic", data)
-                    await set_value("start_pic_ext", ext)
-                    await e.reply(f"{bread('owner', 'start pic')}\n\n"
-                                  + quote(f"{pill('Saved', 'ok')}\n{kv('Size', f'{len(data)//1024} KB')}"),
+            try:
+                if action == "setname" and e.text:
+                    ok, clean, stripped = await _apply_name(e.text[:64])
+                    body = (
+                        f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
+                        f"{kv('Applied', clean)}\n"
+                        f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
+                    )
+                    if stripped:
+                        body += "\n\n<i>⚠️ Styled chars stripped — Telegram bot names must be plain ASCII.</i>"
+                    await e.reply(f"{bread('owner', 'name')}\n\n" + quote(body),
                                   parse_mode="html")
-                else:
-                    ok = await _apply_pic(data)
-                    await e.reply(f"{bread('owner', 'photo')}\n\n"
-                                  + quote(f"{pill('Updated', 'ok') if ok != -1 else pill('USER_SESSION missing', 'bad')}"),
+                elif action == "setbio" and e.text:
+                    ok, clean, stripped = await _apply_bio(e.text[:140])
+                    body = (
+                        f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
+                        f"{kv('Applied', clean)}\n"
+                        f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
+                    )
+                    if stripped:
+                        body += "\n\n<i>⚠️ Styled chars stripped.</i>"
+                    await e.reply(f"{bread('owner', 'bio')}\n\n" + quote(body),
                                   parse_mode="html")
+                elif action in ("setpic", "setstartpic"):
+                    if not e.photo and not (e.document and "image" in (e.document.mime_type or "")):
+                        return await e.reply("❌ Not a photo.", parse_mode="html")
+                    data = await e.download_media(file=bytes)
+                    if not data:
+                        return await e.reply("❌ Download failed.", parse_mode="html")
+                    if action == "setstartpic":
+                        from ApexSpam.modules.apexpic import _detect_ext
+                        from models.bot_settings import set_value
+                        ext = _detect_ext(data)
+                        await set_value("start_pic", data)
+                        await set_value("start_pic_ext", ext)
+                        await e.reply(
+                            f"{bread('owner', 'start pic')}\n\n"
+                            + quote(f"{pill('Saved', 'ok')}\n{kv('Size', f'{len(data)//1024} KB')}"),
+                            parse_mode="html",
+                        )
+                    else:
+                        ok = await _apply_pic(data)
+                        msg = pill('Updated', 'ok') if ok != -1 else pill('USER_SESSION missing', 'bad')
+                        await e.reply(
+                            f"{bread('owner', 'photo')}\n\n"
+                            + quote(f"{msg}\n{kv('Count', ok if ok != -1 else 'n/a')}"),
+                            parse_mode="html",
+                        )
+            except Exception as ex:
+                log.exception(f"pending {action}: {ex}")
 
         @c.on(events.CallbackQuery(data=b"op_addadmin"))
         async def addadmin_cb(e):
@@ -348,3 +384,53 @@ def register():
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
             await respond.ack(e, "Send .axlogs", True)
+
+        @c.on(events.NewMessage(pattern=r"^[\.!/]setname(?: |$)"))
+        async def setname(e):
+            if e.sender_id != OWNER_ID:
+                return
+            parts = e.text.split(maxsplit=1)
+            if len(parts) < 2:
+                return await e.reply("<code>.setname New Name</code>", parse_mode="html")
+            ok, clean, stripped = await _apply_name(parts[1][:64])
+            body = (
+                f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
+                f"{kv('Applied', clean)}\n"
+                f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
+            )
+            if stripped:
+                body += "\n\n<i>⚠️ Styled chars stripped — bot names must be plain ASCII.</i>"
+            await e.reply(f"{bread('owner', 'name')}\n\n" + quote(body), parse_mode="html")
+
+        @c.on(events.NewMessage(pattern=r"^[\.!/]setbio(?: |$)"))
+        async def setbio(e):
+            if e.sender_id != OWNER_ID:
+                return
+            parts = e.text.split(maxsplit=1)
+            if len(parts) < 2:
+                return await e.reply("<code>.setbio Bio</code>", parse_mode="html")
+            ok, clean, stripped = await _apply_bio(parts[1][:140])
+            body = (
+                f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
+                f"{kv('Applied', clean)}\n"
+                f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
+            )
+            if stripped:
+                body += "\n\n<i>⚠️ Styled chars stripped.</i>"
+            await e.reply(f"{bread('owner', 'bio')}\n\n" + quote(body), parse_mode="html")
+
+        @c.on(events.NewMessage(pattern=r"^[\.!/]setbotpic(?: |$)"))
+        async def setbotpic(e):
+            if e.sender_id != OWNER_ID:
+                return
+            if not e.reply_to_msg_id:
+                return await e.reply("Reply to a photo.", parse_mode="html")
+            r = await e.get_reply_msg if False else await e.get_reply_message()
+            if not r.photo and not (r.document and "image" in (r.document.mime_type or "")):
+                return await e.reply("❌ Not a photo.", parse_mode="html")
+            data = await r.download_media(file=bytes)
+            if not data:
+                return await e.reply("❌ Download failed.", parse_mode="html")
+            ok = await _apply_pic(data)
+            msg = pill('Updated', 'ok') if ok != -1 else pill('USER_SESSION missing', 'bad')
+            await e.reply(f"{bread('owner', 'photo')}\n\n" + quote(f"{msg}"), parse_mode="html")
