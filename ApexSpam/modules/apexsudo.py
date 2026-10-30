@@ -66,7 +66,7 @@ def register():
                 parse_mode="html",
             )
 
-        @c.on(events.NewMessage(pattern=rf"^[\.!/]listsudo(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]sudolist(?: |$)"))
         async def sudolist(e):
             if e.sender_id != OWNER_ID:
                 return
