@@ -21,9 +21,11 @@ PENDING = {}
 
 
 async def _apply_name(name):
-    from ApexSpam.fonts import asciify
-    clean = asciify(name)[:64]
-    stripped = clean != name
+    # Telegram bot display names ACCEPT styled Unicode.
+    # Do NOT asciify — send the styled text as-is.
+    clean = name.strip()[:64]
+    if not clean:
+        return 0, "", False
     ok = 0
     for c in CLIENTS:
         try:
@@ -32,13 +34,14 @@ async def _apply_name(name):
             ok += 1
         except Exception as ex:
             log.warning(f"name fail: {ex}")
-    return ok, clean, stripped
+    return ok, clean, False
 
 
 async def _apply_bio(bio):
-    from ApexSpam.fonts import asciify
-    clean = asciify(bio)[:120]
-    stripped = clean != bio
+    # Bio also accepts styled Unicode — send as-is.
+    clean = bio.strip()[:120]
+    if not clean:
+        return 0, "", False
     ok = 0
     for c in CLIENTS:
         try:
@@ -47,7 +50,7 @@ async def _apply_bio(bio):
             ok += 1
         except Exception as ex:
             log.warning(f"bio fail: {ex}")
-    return ok, clean, stripped
+    return ok, clean, False
 
 
 async def _apply_pic(data):
@@ -298,8 +301,8 @@ def register():
                         f"{kv('Applied', clean)}\n"
                         f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
                     )
-                    if stripped:
-                        body += "\n\n<i>⚠️ Styled chars stripped — Telegram bot names must be plain ASCII.</i>"
+                    if not ok:
+                        body += "\n\n<i>⚠️ Name update failed — check Heroku logs.</i>"
                     await e.reply(f"{bread('owner', 'name')}\n\n" + quote(body),
                                   parse_mode="html")
                 elif action == "setbio" and e.text:
@@ -309,8 +312,8 @@ def register():
                         f"{kv('Applied', clean)}\n"
                         f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
                     )
-                    if stripped:
-                        body += "\n\n<i>⚠️ Styled chars stripped.</i>"
+                    if not ok:
+                        body += "\n\n<i>⚠️ Bio update failed.</i>"
                     await e.reply(f"{bread('owner', 'bio')}\n\n" + quote(body),
                                   parse_mode="html")
                 elif action in ("setpic", "setstartpic"):
@@ -398,8 +401,8 @@ def register():
                 f"{kv('Applied', clean)}\n"
                 f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
             )
-            if stripped:
-                body += "\n\n<i>⚠️ Styled chars stripped — bot names must be plain ASCII.</i>"
+            if not ok:
+                body += "\n\n<i>⚠️ Name update failed.</i>"
             await e.reply(f"{bread('owner', 'name')}\n\n" + quote(body), parse_mode="html")
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]setbio(?: |$)"))
@@ -415,8 +418,8 @@ def register():
                 f"{kv('Applied', clean)}\n"
                 f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
             )
-            if stripped:
-                body += "\n\n<i>⚠️ Styled chars stripped.</i>"
+            if not ok:
+                body += "\n\n<i>⚠️ Bio update failed.</i>"
             await e.reply(f"{bread('owner', 'bio')}\n\n" + quote(body), parse_mode="html")
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]setbotpic(?: |$)"))
