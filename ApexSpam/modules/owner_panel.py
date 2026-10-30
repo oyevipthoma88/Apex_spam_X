@@ -9,7 +9,7 @@ from ApexSpam import (
     HNDLR, OWNER_ID, CLIENTS, HEROKU_APP_NAME, HEROKU_API_KEY,
     USER_SESSION, API_ID, API_HASH,
 )
-from ApexSpam import respond
+from ApexSpam import respond, trace
 from ApexSpam.ui import bread, quote, kv, pill, table, footer
 from ApexSpam.buttons import ib, copy_btn
 from models.whitelist import list_gcs
@@ -408,6 +408,10 @@ def register():
             if len(parts) < 2:
                 return await e.reply("<code>.setname New Name</code>", parse_mode="html")
             ok, clean, stripped = await _apply_name(parts[1][:64])
+            try:
+                await trace.log_owner("name", e.sender_id, getattr(e.sender,"first_name","Owner"), "name", clean)
+            except Exception:
+                pass
             body = (
                 f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
                 f"{kv('Applied', clean)}\n"
@@ -425,6 +429,10 @@ def register():
             if len(parts) < 2:
                 return await e.reply("<code>.setbio Bio</code>", parse_mode="html")
             ok, clean, stripped = await _apply_bio(parts[1][:140])
+            try:
+                await trace.log_owner("bio", e.sender_id, getattr(e.sender,"first_name","Owner"), "bio", clean)
+            except Exception:
+                pass
             body = (
                 f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
                 f"{kv('Applied', clean)}\n"

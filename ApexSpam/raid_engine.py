@@ -9,6 +9,7 @@ from telethon.errors import ChatWriteForbiddenError, FloodWaitError, SlowModeWai
 from ApexSpam import HNDLR, OWNER_ID
 from ApexSpam import fonts, roles
 from ApexSpam import logger as xlog
+from ApexSpam import trace
 from ApexSpam.ui import bread, quote, prog, pill, footer
 from ApexSpam.buttons import ib
 
@@ -158,6 +159,16 @@ async def execute_raid(event, pack, cmd_name):
     else:
         await event.reply(final, parse_mode="html")
 
+    try:
+        await trace.log_raid(
+            actor_id=event.sender_id,
+            actor_name=getattr(event.sender, 'first_name', 'User'),
+            target_id=uid, target_name=name,
+            chat_id=event.chat_id, chat_title=await _title(event),
+            cmd=cmd_name, count=sent,
+        )
+    except Exception:
+        pass
     try:
         await xlog.log_raid(
             user_id=event.sender_id,

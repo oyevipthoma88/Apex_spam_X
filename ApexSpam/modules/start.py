@@ -11,7 +11,7 @@ from ApexSpam import (
 )
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
 from ApexSpam.buttons import ib, ub
-from ApexSpam import respond
+from ApexSpam import respond, trace
 from models.bot_settings import get_value
 
 log = logging.getLogger("ApexSpam.start")
@@ -101,6 +101,10 @@ def register():
                 except Exception:
                     pass
                 return
+            try:
+                await trace.log_start(e.sender_id, getattr(e.sender,'first_name','User'), username, e.is_private)
+            except Exception:
+                pass
             try:
                 await _send(e, await _build(e, username))
             except Exception as ex:

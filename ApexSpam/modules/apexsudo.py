@@ -1,7 +1,7 @@
 from telethon import events
 
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS
-from ApexSpam import roles, respond
+from ApexSpam import roles, respond, trace
 from ApexSpam.ui import bread, quote, kv, table, pill, footer, join_rows
 from ApexSpam.buttons import ib, copy_btn
 from models.sudo import add_sudo, remove_sudo, all_records
@@ -40,6 +40,10 @@ def register():
                                      parse_mode="html")
             await add_sudo(uid, added_by=e.sender_id)
             roles.invalidate(uid)
+            try:
+                await trace.log_sudo('added', e.sender_id, getattr(e.sender,'first_name','User'), uid)
+            except Exception:
+                pass
 
             dm_ok = False
             try:
@@ -81,6 +85,10 @@ def register():
                                      parse_mode="html")
             gone = await remove_sudo(uid)
             roles.invalidate(uid)
+            try:
+                await trace.log_sudo('removed', e.sender_id, getattr(e.sender,'first_name','User'), uid)
+            except Exception:
+                pass
             await e.reply(
                 f"{bread('sudo', 'removed')}\n\n"
                 + quote(f"{pill('Removed' if gone else 'Not found', 'ok' if gone else 'warn')}\n"

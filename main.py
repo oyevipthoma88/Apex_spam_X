@@ -5,7 +5,7 @@ from pathlib import Path
 
 import config
 from ApexSpam import fonts, buttons, state, logger as xlog, dedup
-from ApexSpam import cache, botinfo
+from ApexSpam import cache, botinfo, trace
 from ApexSpam.modules import customcmds
 
 logging.basicConfig(
@@ -88,6 +88,10 @@ async def main():
         log.info('bot info cached')
     except Exception as e:
         log.warning(f'botinfo warm: {e}')
+    try:
+        trace.register()
+    except Exception as e:
+        log.warning(f'trace register: {e}')
     asyncio.create_task(sync_loop())
     log.info(f"🚀 running with {started} client(s) | rich buttons: {buttons.HAS_STYLE}")
     await asyncio.Event().wait()
