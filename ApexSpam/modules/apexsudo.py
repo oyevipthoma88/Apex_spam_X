@@ -40,14 +40,43 @@ def register():
                 )
             await add_sudo(uid, added_by=e.sender_id)
             roles.invalidate(uid)
-            await e.reply(
+
+            # Send tutorial DM to new sudo
+            tutorial = (
+                f"🎓 <b>Welcome to Apex Spam X sudo!</b>\n\n"
+                f"You have been granted <b>sudo</b> access.\n\n"
+                f"<b>Quick start:</b>\n"
+                f"◈ <code>{HNDLR}help</code> — all commands\n"
+                f"◈ <code>{HNDLR}raid 5 @user</code> — raid a target\n"
+                f"◈ <code>{HNDLR}rraid 3</code> (reply) — auto-fire on their next msg\n"
+                f"◈ <code>{HNDLR}stop</code> — abort running raid\n"
+                f"◈ <code>{HNDLR}font</code> — change font style\n"
+                f"◈ <code>{HNDLR}setcmd name response</code> — your own command\n\n"
+                f"<b>Sudo rules:</b>\n"
+                f"◈ You can add any user as sudo\n"
+                f"◈ You can remove <b>only those you added yourself</b>\n"
+                f"◈ Owner cannot be touched\n\n"
+                f"Please <b>send /start to the bot</b> to see the full tutorial card, "
+                f"and use <code>{HNDLR}help</code> for details."
+            )
+            dm_ok = False
+            try:
+                await e.client.send_message(uid, tutorial, parse_mode="html")
+                dm_ok = True
+            except Exception:
+                dm_ok = False
+
+            reply_text = (
                 f"{header('sudo added', '✅')}\n\n"
                 + quote(
-                    f"{kv('User', uid)}\n{kv('Added by', e.sender_id)}\n{kv('Store', 'MongoDB')}",
+                    f"{kv('User', uid)}\n"
+                    f"{kv('Added by', e.sender_id)}\n"
+                    f"{kv('Tutorial DM', 'sent' if dm_ok else 'failed (user must /start bot first)')}\n"
+                    f"{kv('Store', 'MongoDB')}",
                     expandable=True,
-                ),
-                parse_mode="html",
+                )
             )
+            await e.reply(reply_text, parse_mode="html")
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]delsudo(?: |$)"))
         async def delsudo(e):

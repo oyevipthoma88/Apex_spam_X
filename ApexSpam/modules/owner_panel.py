@@ -124,7 +124,8 @@ def _buttons():
     return [
         [ib("✏️ Set Name", b"op_setname", "primary"),
          ib("📝 Set Bio", b"op_setbio", "primary")],
-        [ib("🖼️ Set Photo", b"op_setpic", "primary")],
+        [ib("🖼️ Set Photo", b"op_setpic", "primary"),
+         ib("🎨 Set Start Pic", b"op_setstartpic", "success")],
         [ib("👤 Add Admin", b"op_addadmin", "success"),
          ib("🚫 Remove Admin", b"op_deladmin", "danger")],
         [ib("🛡️ Add Sudo", b"op_addsudo", "success"),
@@ -187,6 +188,22 @@ def register():
             )
             PENDING[e.chat_id] = ("setbio", m.id)
             await e.answer("Reply with bio")
+
+        @c.on(events.CallbackQuery(data=b"op_setstartpic"))
+        async def cb_setstartpic(e):
+            if e.sender_id != OWNER_ID:
+                return await e.answer("Owner only", alert=True)
+            m = await e.edit(
+                f"{header('set start pic', '🎨')}\n\n"
+                + quote(
+                    "Reply to this message with a <b>photo</b>.\n"
+                    "This photo will show on <code>/start</code> for everyone,\n"
+                    "and stays saved forever (MongoDB)."
+                ),
+                parse_mode="html",
+            )
+            PENDING[e.chat_id] = ("setstartpic", m.id)
+            await e.answer("Reply with photo")
 
         @c.on(events.CallbackQuery(data=b"op_setpic"))
         async def cb_setpic(e):
@@ -286,6 +303,32 @@ def register():
                             expandable=True),
                     parse_mode="html",
                 )
+            elif action == "setstartpic":
+                if not e.photo and not (
+                    e.document and "image" in (e.document.mime_type or "")
+                ):
+                    return await e.reply("❌ Not a photo. Try again.", parse_mode="html")
+                data = await e.download_media(file=bytes)
+                if not data:
+                    return await e.reply("❌ Download failed.", parse_mode="html")
+                if len(data) > 8 * 1024 * 1024:
+                    return await e.reply("❌ Too large (max 8 MB).", parse_mode="html")
+                from ApexSpam.modules.apexpic import _detect_ext
+                from models.bot_settings import set_value
+                ext = _detect_ext(data)
+                await set_value("start_pic", data)
+                await set_value("start_pic_ext", ext)
+                await e.reply(
+                    f"{header('start pic saved', '✅')}\n\n"
+                    + quote(
+                        f"{kv('Size', f'{len(data)//1024} KB')}\n"
+                        f"{kv('Format', ext)}\n"
+                        f"{kv('Store', 'MongoDB — survives restart')}",
+                        expandable=True,
+                    ),
+                    parse_mode="html",
+                )
+
             elif action == "setpic":
                 if not e.photo and not (e.document and "image" in (e.document.mime_type or "")):
                     return await e.reply("❌ Not a photo. Try again.", parse_mode="html")

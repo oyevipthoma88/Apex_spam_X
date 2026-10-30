@@ -21,6 +21,7 @@ def _buttons(uid=0):
         [ib("⚡  C O M M A N D S", b"help_back", "primary")],
         [ib("📖 About", b"about_btn", "primary"),
          ib("🛡️ Status", b"status_btn", "success")],
+        [ib("🎓 Tutorial", b"tutorial_btn", "primary")],
     ]
     if uid == OWNER_ID:
         rows.append([ib("👑 Owner Panel", b"owner_panel", "danger")])
@@ -157,6 +158,43 @@ def register():
                 await e.edit(t(), buttons=b(), parse_mode="html")
             except Exception:
                 await e.answer("Error", alert=True)
+
+        @c.on(events.CallbackQuery(data=b"tutorial_btn"))
+        async def tutorial(e):
+            try:
+                text = (
+                    f"{header('tutorial', '🎓')}\n\n"
+                    + quote(
+                        "<b>📌 Step 1 — Prefix</b>\n"
+                        f"Type <code>{HNDLR}</code> <code>!</code> <code>/</code> before any command.\n\n"
+                        "<b>📌 Step 2 — Help</b>\n"
+                        f"<code>{HNDLR}help</code> — see all categories\n\n"
+                        "<b>📌 Step 3 — Raid</b>\n"
+                        f"<code>{HNDLR}raid 5 @user</code>\n"
+                        f"<code>{HNDLR}raid 5</code> (reply to target)\n"
+                        f"Or use <code>{HNDLR}rraid 3</code> — auto-fire on their next message\n\n"
+                        "<b>📌 Step 4 — Font</b>\n"
+                        f"<code>{HNDLR}font</code> — change style of all raid data\n\n"
+                        "<b>📌 Step 5 — Custom commands</b>\n"
+                        f"<code>{HNDLR}setcmd hello Hi there!</code>\n"
+                        f"Then just type <code>{HNDLR}hello</code> — only you see it\n"
+                        f"Manage: <code>{HNDLR}mycmds</code> / <code>{HNDLR}delcmd name</code>\n\n"
+                        "<b>📌 Sudo users</b>\n"
+                        "You can add/remove <b>only the users you added yourself</b>.\n"
+                        "Owner can override anything.\n\n"
+                        "<b>📌 Stop any running raid</b>\n"
+                        f"<code>{HNDLR}stop</code>",
+                        expandable=True,
+                    )
+                    + f"\n{footer()}"
+                )
+                await e.edit(
+                    text,
+                    buttons=[[ib("« Back", b"start_back", "primary")]],
+                    parse_mode="html",
+                )
+            except Exception:
+                pass
 
         @c.on(events.CallbackQuery(data=b"start_back"))
         async def back(e):
