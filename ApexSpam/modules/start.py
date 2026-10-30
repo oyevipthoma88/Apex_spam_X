@@ -11,6 +11,7 @@ from ApexSpam import (
 )
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
 from ApexSpam.buttons import ib, ub
+from ApexSpam import respond
 from models.bot_settings import get_value
 
 log = logging.getLogger("ApexSpam.start")
@@ -104,6 +105,17 @@ def register():
                 await _send(e, await _build(e, username))
             except Exception as ex:
                 log.exception(f"start failed: {ex}")
+
+        @c.on(events.CallbackQuery(data=b"owner_panel"))
+        async def open_panel(e):
+            if e.sender_id != OWNER_ID:
+                return await respond.ack(e, "Owner only", True)
+            try:
+                from ApexSpam.modules.owner_panel import _main
+                text, rows = _main()
+                await respond.edit(e, text, rows)
+            except Exception as ex:
+                log.exception(f"owner_panel fallback failed: {ex}")
 
         @c.on(events.CallbackQuery(data=b"tutorial_btn"))
         async def tutorial(e):

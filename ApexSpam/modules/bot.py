@@ -9,6 +9,7 @@ from ApexSpam import (
 )
 from ApexSpam import botinfo, respond
 from ApexSpam.buttons import ib, grid
+from ApexSpam.ui import bread, quote, kv
 
 
 # rtt limit, emoji, label, bar count
@@ -68,6 +69,21 @@ def _card(rtt, username):
     )
 
 
+async def _gc_warning(client, chat_id):
+    """Return warning text if bot is not admin in GC, else ''."""
+    try:
+        me = await client.get_me()
+        perms = await client.get_permissions(chat_id, me.id)
+        if not getattr(perms, "is_admin", False):
+            return (
+                "\n\n<blockquote>⚠️ <b>Bot is not admin</b>\n"
+                "Run <code>.gcsetup</code> for fix.</blockquote>"
+            )
+    except Exception:
+        pass
+    return ""
+
+
 def _btns():
     return grid([
         ib("🔄 Refresh", b"ping:refresh", "primary"),
@@ -83,7 +99,10 @@ def register():
             t0 = time.time()
             u = await botinfo.username(e.client)
             rtt = round((time.time() - t0) * 1000, 2)
-            await e.reply(_card(rtt, u), buttons=_btns(), parse_mode="html")
+            card = _card(rtt, u)
+            if not e.is_private:
+                card += await _gc_warning(e.client, e.chat_id)
+            await e.reply(card, buttons=_btns(), parse_mode="html")
 
         @c.on(events.CallbackQuery(data=b"ping:refresh"))
         async def refresh(e):

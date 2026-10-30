@@ -183,9 +183,12 @@ def register():
 
         @c.on(events.CallbackQuery(pattern=r"opx:(\w+)"))
         async def opx(e):
+            log.info(f"opx from {e.sender_id} data={e.data!r}")
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
-            action = e.pattern_match.group(1).decode()
+            action = e.pattern_match.group(1)
+                if isinstance(action, bytes):
+                    action = action.decode()
             if action == "close":
                 await respond.ack(e)
                 try:
@@ -198,6 +201,18 @@ def register():
             await respond.edit(e, text, rows)
 
         # ── pending flows ──
+        @c.on(events.CallbackQuery(data=b"owner_panel"))
+        async def open_panel(e):
+            log.info(f"owner_panel from {e.sender_id}")
+            if e.sender_id != OWNER_ID:
+                return await respond.ack(e, "Owner only", True)
+            try:
+                text, rows = _main()
+                await respond.edit(e, text, rows)
+            except Exception as ex:
+                log.exception(f"owner_panel failed: {ex}")
+                await respond.ack(e, f"Error: {str(ex)[:40]}", True)
+
         @c.on(events.CallbackQuery(data=b"op_setname"))
         async def cb_setname(e):
             if e.sender_id != OWNER_ID:
