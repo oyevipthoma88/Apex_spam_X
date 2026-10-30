@@ -1,4 +1,4 @@
-"""Apex Spam X — ping (compact) + reboot."""
+"""Apex Spam X — ping (compact + branded) + reboot."""
 import time
 
 from telethon import events
@@ -7,7 +7,7 @@ from ApexSpam import (
     HNDLR, OWNER_ID, START_TIME,
     HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS,
 )
-from ApexSpam import botinfo, respond, gcguard
+from ApexSpam import botinfo, respond
 from ApexSpam.buttons import ib, grid
 
 
@@ -32,12 +32,16 @@ def _sig(rtt):
 def _card(rtt, username):
     e, label = _sig(rtt)
     return (
+        "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
+        "   ⚡ <b>ᴀ ᴘ ᴇ x   x   s ᴘ ᴀ ᴍ</b> ⚡\n"
+        "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
         f"🏓 <b>ᴘ ᴏ ɴ ɢ</b>  ·  {e} <b>{label}</b>\n\n"
         f"<blockquote>"
         f"◈ <b>Latency</b>  <code>{rtt} ms</code>\n"
         f"◈ <b>Uptime</b>   <code>{_uptime()}</code>\n"
         f"◈ <b>Bot</b>      <code>@{username}</code>"
-        f"</blockquote>"
+        f"</blockquote>\n\n"
+        "<i>💫 ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴘᴇx x sᴘᴀᴍ</i>"
     )
 
 
@@ -56,10 +60,7 @@ def register():
             t0 = time.time()
             u = await botinfo.username(e.client)
             rtt = round((time.time() - t0) * 1000, 2)
-            card = _card(rtt, u)
-            if not e.is_private:
-                card += await gcguard.warn_if_not_admin(e.client, e.chat_id, False)
-            await e.reply(card, buttons=_btns(), parse_mode="html")
+            await e.reply(_card(rtt, u), buttons=_btns(), parse_mode="html")
 
         @c.on(events.CallbackQuery(data=b"ping:refresh"))
         async def refresh(e):
@@ -87,12 +88,16 @@ def register():
             avg = round(sum(s) / len(s), 2)
             emoji, label = _sig(avg)
             text = (
+                "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
+                "   ⚡ <b>ᴀ ᴘ ᴇ x   x   s ᴘ ᴀ ᴍ</b> ⚡\n"
+                "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
                 f"📊 <b>s ᴘ ᴇ ᴇ ᴅ</b>  ·  {emoji} <b>{label}</b>\n\n"
                 f"<blockquote>"
                 f"◈ <b>Best</b>  <code>{best} ms</code>\n"
                 f"◈ <b>Avg</b>   <code>{avg} ms</code>\n"
                 f"◈ <b>Worst</b> <code>{worst} ms</code>"
-                f"</blockquote>"
+                f"</blockquote>\n\n"
+                "<i>💫 ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴘᴇx x sᴘᴀᴍ</i>"
             )
             await respond.edit(e, text, _btns())
 

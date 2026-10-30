@@ -1,7 +1,7 @@
 from telethon import events
 
 from ApexSpam import HNDLR, CLIENTS
-from ApexSpam import roles, respond, gcguard
+from ApexSpam import roles, respond
 from ApexSpam.ui import bread, quote, divider, footer, pill, kv, join_rows
 from ApexSpam.buttons import ib, copy_btn, nav, grid
 
@@ -66,7 +66,7 @@ def register():
         @c.on(events.NewMessage(pattern=r"^[\.!/]help(?: |$)"))
         async def help_cmd(e):
             text, rows = await _menu(e.sender_id)
-            text += await gcguard.warn_if_not_admin(e.client, e.chat_id, e.is_private)
+            
             await e.reply(text, buttons=rows, parse_mode="html")
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]help (\w+)(?: |$)"))
