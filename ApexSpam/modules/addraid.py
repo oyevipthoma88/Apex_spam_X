@@ -17,15 +17,11 @@ PACKS = {
 }
 
 
-async def _perm(e):
-    return await roles.can_use(e.sender_id)
-
-
 def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=r"^[\.!/]addraid(?: |$)"))
         async def addraid(e):
-            if not await _perm(e):
+            if not await roles.can_use(e.sender_id):
                 return
             parts = e.text.split(maxsplit=2)
             if len(parts) < 3:
@@ -50,7 +46,7 @@ def register():
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]delraid(?: |$)"))
         async def delraid(e):
-            if not await _perm(e):
+            if not await roles.can_use(e.sender_id):
                 return
             parts = e.text.split(maxsplit=2)
             if len(parts) < 3:
@@ -73,7 +69,7 @@ def register():
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]listraid(?: |$)"))
         async def listraid(e):
-            if not await _perm(e):
+            if not await roles.can_use(e.sender_id):
                 return
             parts = e.text.split(maxsplit=1)
             cat = parts[1].lower() if len(parts) > 1 else ""
