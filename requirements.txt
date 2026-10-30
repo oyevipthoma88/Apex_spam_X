@@ -1,5 +1,5 @@
-telethon>=1.43
+telethon>=1.36,<2
 cryptg
-motor
+motor>=3.3
 pymongo
 heroku3

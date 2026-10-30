@@ -1,55 +1,78 @@
-import asyncio, importlib, logging
+import asyncio
+import importlib
+import logging
 from pathlib import Path
+
 import config
-from config import BOT_TOKENS
-from models.sudo import mongo_ids
 from ApexSpam import fonts, buttons
 
-logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s - %(message)s",
+)
 log = logging.getLogger("ApexSpam")
 
 
 async def sync_loop():
     while True:
         try:
+            from models.sudo import mongo_ids
             for uid in await mongo_ids():
                 if uid not in config.SUDO_USERS:
                     config.SUDO_USERS.append(uid)
             await fonts.sync_from_db()
         except Exception as e:
             log.warning(f"sync_loop: {e}")
-        await asyncio.sleep(20)
+        await asyncio.sleep(30)
 
 
 def load_modules():
     for path in sorted(Path("ApexSpam/modules").glob("*.py")):
-        if path.name.startswith("__"): continue
-        mod_name = f"ApexSpam.modules.{path.stem}"
+        if path.name.startswith("__"):
+            continue
+        name = f"ApexSpam.modules.{path.stem}"
         try:
-            mod = importlib.import_module(mod_name)
-            if hasattr(mod, "register") and callable(mod.register):
-                mod.register()
-                log.info(f"✅ Loaded+registered: {mod_name}")
+            mod = importlib.import_module(name)
+            fn = getattr(mod, "register", None)
+            if callable(fn):
+                fn()
+                log.info(f"✅ loaded+registered: {name}")
             else:
-                log.info(f"✅ Loaded: {mod_name}")
+                log.info(f"✅ loaded: {name}")
         except Exception as e:
-            log.exception(f"❌ Failed: {mod_name} → {e}")
+            log.exception(f"❌ failed: {name} -> {e}")
 
 
 async def main():
     fonts.patch()
     await fonts.sync_from_db()
-    log.info(f"🎨 Active font: {fonts.ACTIVE_FONT}")
+    log.info(f"active font: {fonts.ACTIVE_FONT}")
+
+    try:
+        config.create_clients()
+        log.info(f"clients created: {len(config.CLIENTS)}")
+    except Exception as e:
+        log.exception(f"❌ client setup failed: {e}")
+        return
+
     load_modules()
-    for client, token in BOT_TOKENS:
+
+    started = 0
+    for cli, tok in zip(config.CLIENTS, config.BOT_TOKENS):
         try:
-            await client.start(bot_token=token)
-            me = await client.get_me()
-            log.info(f"✅ Logged in as @{me.username}")
+            await cli.start(bot_token=tok)
+            me = await cli.get_me()
+            started += 1
+            log.info(f"✅ logged in as @{me.username}")
         except Exception as e:
-            log.exception(f"❌ Login failed: {e}")
+            log.exception(f"❌ login failed: {e}")
+
+    if started == 0:
+        log.error("❌ NO CLIENT STARTED — check API_ID / API_HASH / BOT_TOKEN1")
+        return
+
     asyncio.create_task(sync_loop())
-    log.info(f"🚀 Running with {len(BOT_TOKENS)} client(s) | colored buttons: {buttons.HAS_STYLE}")
+    log.info(f"🚀 running with {started} client(s) | rich buttons: {buttons.HAS_STYLE}")
     await asyncio.Event().wait()
 
 
