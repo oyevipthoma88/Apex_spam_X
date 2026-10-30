@@ -1,34 +1,128 @@
 {
   "name": "Apex Spam X",
-  "description": "Multi-bot raid & spam engine — Mongo sudo, premium UI, 10 client support.",
+  "description": "Multi-bot raid & spam engine \u2014 Mongo sudo, premium UI, 10 client support.",
   "repository": "https://github.com/oyevipthoma88/Apex_spam_X",
-  "keywords": ["telegram", "telethon", "bot", "mongodb", "heroku"],
+  "keywords": [
+    "telegram",
+    "telethon",
+    "bot",
+    "mongodb",
+    "heroku"
+  ],
   "stack": "heroku-24",
-  "buildpacks": [{ "url": "heroku/python" }],
-  "formation": { "worker": { "quantity": 1, "size": "basic" } },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
   "env": {
-    "API_ID":            { "description": "Telegram API ID", "required": true },
-    "API_HASH":          { "description": "Telegram API HASH", "required": true },
-    "OWNER_ID":          { "description": "Owner Telegram numeric ID", "required": true },
-    "OWNER_USERNAME":    { "description": "Public owner username (no @)", "required": false },
-    "SUPPORT_LINK":      { "description": "Support channel URL", "value": "https://t.me/ApexSpamXSupport", "required": false },
-    "SUDO_GC":           { "description": "Sudo GC link/username", "required": false },
-    "MONGO_DB_URI":      { "description": "MongoDB Atlas URI", "required": true },
-    "BOT_TOKEN1":        { "description": "Bot 1 token (required)", "required": true },
-    "BOT_TOKEN2":        { "description": "Bot 2 token", "required": false },
-    "BOT_TOKEN3":        { "description": "Bot 3 token", "required": false },
-    "BOT_TOKEN4":        { "description": "Bot 4 token", "required": false },
-    "BOT_TOKEN5":        { "description": "Bot 5 token", "required": false },
-    "BOT_TOKEN6":        { "description": "Bot 6 token", "required": false },
-    "BOT_TOKEN7":        { "description": "Bot 7 token", "required": false },
-    "BOT_TOKEN8":        { "description": "Bot 8 token", "required": false },
-    "BOT_TOKEN9":        { "description": "Bot 9 token", "required": false },
-    "BOT_TOKEN10":       { "description": "Bot 10 token", "required": false },
-    "CMD_HNDLR":         { "description": "Command prefix", "value": ".", "required": false },
-    "SUDO_USERS":        { "description": "Space-separated sudo IDs (fallback)", "required": false },
-    "HEROKU_APP_NAME":   { "description": "Heroku app name", "required": false },
-    "HEROKU_API_KEY":    { "description": "Heroku API key", "required": false },
-    "LOG_CHANNEL_ID":    { "description": "Log channel ID (e.g. -100...)", "required": false },
-    "USER_SESSION":      { "description": "StringSession of owner (for bot profile photo)", "required": false }
+    "API_ID": {
+      "description": "Telegram API ID",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Telegram API HASH",
+      "required": true
+    },
+    "OWNER_ID": {
+      "description": "Owner Telegram numeric ID",
+      "required": true
+    },
+    "OWNER_USERNAME": {
+      "description": "Public owner username (no @)",
+      "required": false
+    },
+    "SUPPORT_LINK": {
+      "description": "Support channel URL",
+      "value": "https://t.me/ApexSpamXSupport",
+      "required": false
+    },
+    "SUDO_GC": {
+      "description": "Sudo GC link/username",
+      "required": false
+    },
+    "MONGO_DB_URI": {
+      "description": "MongoDB Atlas URI",
+      "required": true
+    },
+    "BOT_TOKEN1": {
+      "description": "Bot 1 token (required)",
+      "required": true
+    },
+    "BOT_TOKEN2": {
+      "description": "Bot 2 token",
+      "required": false
+    },
+    "BOT_TOKEN3": {
+      "description": "Bot 3 token",
+      "required": false
+    },
+    "BOT_TOKEN4": {
+      "description": "Bot 4 token",
+      "required": false
+    },
+    "BOT_TOKEN5": {
+      "description": "Bot 5 token",
+      "required": false
+    },
+    "BOT_TOKEN6": {
+      "description": "Bot 6 token",
+      "required": false
+    },
+    "BOT_TOKEN7": {
+      "description": "Bot 7 token",
+      "required": false
+    },
+    "BOT_TOKEN8": {
+      "description": "Bot 8 token",
+      "required": false
+    },
+    "BOT_TOKEN9": {
+      "description": "Bot 9 token",
+      "required": false
+    },
+    "BOT_TOKEN10": {
+      "description": "Bot 10 token",
+      "required": false
+    },
+    "CMD_HNDLR": {
+      "description": "Command prefix",
+      "value": ".",
+      "required": false
+    },
+    "SUDO_USERS": {
+      "description": "Space-separated sudo IDs (fallback)",
+      "required": false
+    },
+    "HEROKU_APP_NAME": {
+      "description": "Heroku app name",
+      "required": false
+    },
+    "HEROKU_API_KEY": {
+      "description": "Heroku API key",
+      "required": false
+    },
+    "LOG_CHANNEL_ID": {
+      "description": "Log channel ID (e.g. -100...)",
+      "required": false
+    },
+    "USER_SESSION": {
+      "description": "StringSession of owner (for bot profile photo)",
+      "required": false
+    },
+    "SUDO_GC_LINK": {
+      "description": "Sudo GC link/URL",
+      "required": false
+    },
+    "UPDATE_LINK": {
+      "description": "Update channel link/URL",
+      "required": false
+    }
   }
 }

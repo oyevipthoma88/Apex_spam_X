@@ -122,17 +122,17 @@ def _text():
 
 def _buttons():
     return [
-        [ib("✏️ Set Name", b"op_setname", "primary"),
-         ib("📝 Set Bio", b"op_setbio", "primary")],
-        [ib("🖼️ Set Photo", b"op_setpic", "primary"),
-         ib("🎨 Set Start Pic", b"op_setstartpic", "success")],
-        [ib("👤 Add Admin", b"op_addadmin", "success"),
-         ib("🚫 Remove Admin", b"op_deladmin", "danger")],
-        [ib("🛡️ Add Sudo", b"op_addsudo", "success"),
-         ib("⚔️ Remove Sudo", b"op_delsudo", "danger")],
+        [ib("✏️ Name", b"op_setname", "primary"),
+         ib("📝 Bio", b"op_setbio", "primary")],
+        [ib("🖼️ Photo", b"op_setpic", "primary"),
+         ib("🎨 Start Pic", b"op_setstartpic", "success")],
+        [ib("👤 + Admin", b"op_addadmin", "success"),
+         ib("🚫 − Admin", b"op_deladmin", "danger")],
+        [ib("🛡️ + Sudo", b"op_addsudo", "success"),
+         ib("⚔️ − Sudo", b"op_delsudo", "danger")],
         [ib("📌 Add GC", b"op_sudogc", "success"),
-         ib("📋 List All", b"op_list", "primary")],
-        [ib("🔄 Update Bot", b"op_update", "primary"),
+         ib("📋 List", b"op_list", "primary")],
+        [ib("🔄 Restart", b"op_update", "primary"),
          ib("✖ Close", b"op_close", "danger")],
     ]
 

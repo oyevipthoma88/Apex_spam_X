@@ -1,11 +1,14 @@
-"""Apex Spam X — /start (multi-prefix, owner panel, error-safe)."""
+"""Apex Spam X — clean /start with compact buttons."""
 import logging
 import time
 from io import BytesIO
 
 from telethon import events
 
-from ApexSpam import HNDLR, START_TIME, CLIENTS, OWNER_ID
+from ApexSpam import (
+    HNDLR, START_TIME, CLIENTS, OWNER_ID,
+    SUPPORT_LINK, OWNER_USERNAME, SUDO_GC_LINK, UPDATE_LINK,
+)
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
 from ApexSpam.buttons import ib, ub
 from models.bot_settings import get_value
@@ -16,23 +19,28 @@ DEFAULT_CAPTION = "{header}\n\n{greet}\n\n{q1}\n\n{q2}\n\n{meta}"
 
 
 def _buttons(uid=0):
-    from ApexSpam import SUPPORT_LINK, OWNER_USERNAME
     rows = [
-        [ib("⚡  C O M M A N D S", b"help_back", "primary")],
-        [ib("📖 About", b"about_btn", "primary"),
-         ib("🛡️ Status", b"status_btn", "success")],
-        [ib("🎓 Tutorial", b"tutorial_btn", "primary")],
+        [ib("⚡ C O M M A N D S", b"help_back", "primary"),
+         ib("🎓 Tutorial", b"tutorial_btn", "success")],
     ]
+    row = []
+    if SUDO_GC_LINK:
+        row.append(ub("📢 Sudo GC", SUDO_GC_LINK, "primary"))
+    if UPDATE_LINK:
+        row.append(ub("🚀 Update", UPDATE_LINK, "primary"))
+    if row:
+        rows.append(row)
+    row = []
+    if OWNER_USERNAME:
+        row.append(ub("👤 Owner", f"https://t.me/{OWNER_USERNAME}", "primary"))
+    elif OWNER_ID:
+        row.append(ub("👤 Owner", f"tg://user?id={OWNER_ID}", "primary"))
+    if SUPPORT_LINK:
+        row.append(ub("💬 Support", SUPPORT_LINK, "primary"))
+    if row:
+        rows.append(row)
     if uid == OWNER_ID:
         rows.append([ib("👑 Owner Panel", b"owner_panel", "danger")])
-    # Owner profile button (public)
-    if OWNER_USERNAME:
-        rows.append([ub("👤 Owner", f"https://t.me/{OWNER_USERNAME}", "primary")])
-    elif OWNER_ID:
-        rows.append([ub("👤 Owner", f"tg://user?id={OWNER_ID}", "primary")])
-    # Support link
-    if SUPPORT_LINK:
-        rows.append([ub("💬 Support", SUPPORT_LINK, "primary")])
     return rows
 
 
@@ -48,14 +56,13 @@ async def _build(e, bot_username):
         tpl if isinstance(tpl, str) and tpl.strip() else DEFAULT_CAPTION,
         header=header("apex spam x", "⚡"),
         greet=f"Hey {link_user(e.sender_id, e.sender.first_name or 'User')} 👋",
-        q1=quote("<i>Welcome to the ultimate raid engine.</i>"),
+        q1=quote("<i>Your ultimate raid companion.</i>"),
         q2=quote(
-            f"◈ <b>Prefix</b> : <code>{HNDLR} ! /</code>\n"
+            f"◈ <b>Prefix</b> : <code>{HNDLR}</code>  •  <code>!</code>  •  <code>/</code>\n"
             f"◈ <b>Bot</b>    : <code>@{bot_username}</code>\n"
-            f"◈ <b>Uptime</b> : <code>{h}h {m}m {s}s</code>\n"
-            f"◈ <b>Status</b> : <b>✅ Online</b>"
+            f"◈ <b>Uptime</b> : <code>{h}h {m}m {s}s</code>"
         ),
-        meta=f"{divider()}\n<i>Tap below to explore</i> 👇",
+        meta=f"{divider()}\n<i>Tap a button below</i> 👇",
     )
     return text.strip() or "⚡ <b>Apex Spam X</b> — online"
 
@@ -64,100 +71,39 @@ async def _send(e, text):
     try:
         pic = await get_value("start_pic")
         ext = await get_value("start_pic_ext") or "jpg"
-        log.info(f"start: pic type={type(pic).__name__} len={len(pic) if pic else 0} ext={ext}")
         if pic:
             stream = BytesIO(bytes(pic))
             stream.name = f"apex_start.{ext}"
-            await e.reply(text, file=stream,
-                          buttons=_buttons(e.sender_id), parse_mode="html")
+            await e.reply(text, file=stream, buttons=_buttons(e.sender_id),
+                          parse_mode="html")
             return
     except Exception as ex:
-        log.exception(f"pic failed: {ex}")
+        log.warning(f"start pic failed: {ex}")
     try:
         await e.reply(text, buttons=_buttons(e.sender_id), parse_mode="html")
     except Exception as ex:
-        log.exception(f"text failed: {ex}")
-        try:
-            await e.reply("⚡ Apex Spam X — online. /help")
-        except Exception:
-            pass
+        log.exception(f"start text failed: {ex}")
 
 
 def register():
-    log.info(f"registering start.py | HNDLR={HNDLR!r} | clients={len(CLIENTS)}")
-
     for c in CLIENTS:
-        # /start with multi-prefix
-        @c.on(events.NewMessage(pattern=rf"^[\.!/]start(?:@\w+)?(?:\s|$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]start(?:@\w+)?(?:\s|$)"))
         async def start(e):
-            log.info(f"START-HIT uid={e.sender_id} priv={e.is_private}")
             try:
                 me = await e.client.get_me()
                 username = me.username or "bot"
             except Exception:
                 username = "bot"
-
             if not e.is_private:
                 try:
                     await e.reply(f"👋 DM me to start — @{username}")
                 except Exception:
                     pass
                 return
-
             try:
                 await _send(e, await _build(e, username))
             except Exception as ex:
-                log.exception(f"start: {ex}")
-
-        @c.on(events.CallbackQuery(data=b"about_btn"))
-        async def about(e):
-            try:
-                me = await e.client.get_me()
-                text = (
-                    f"{header('about', '⚡')}\n\n"
-                    + quote(
-                        f"◈ <b>Name</b>     : <code>Apex Spam X</code>\n"
-                        f"◈ <b>Bot</b>      : @{me.username}\n"
-                        f"◈ <b>Prefix</b>   : <code>{HNDLR} ! /</code>\n"
-                        f"◈ <b>Engine</b>   : <code>Telethon</code>\n"
-                        f"◈ <b>Database</b> : <code>MongoDB</code>"
-                    )
-                    + "\n\n" + quote("👑 <b>Powered by Apex Spam X</b>")
-                    + f"\n{footer()}"
-                )
-                await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]],
-                             parse_mode="html")
-            except Exception:
-                pass
-
-        @c.on(events.CallbackQuery(data=b"status_btn"))
-        async def status(e):
-            try:
-                up = int(time.time() - START_TIME)
-                h, r = divmod(up, 3600)
-                m, s = divmod(r, 60)
-                text = (
-                    f"{header('status', '🛡️')}\n\n"
-                    + quote(
-                        f"◈ <b>Uptime</b> : <code>{h}h {m}m {s}s</code>\n"
-                        f"◈ <b>Status</b> : <b>✅ Online</b>"
-                    )
-                    + f"\n{footer()}"
-                )
-                await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]],
-                             parse_mode="html")
-            except Exception:
-                pass
-
-        @c.on(events.CallbackQuery(data=b"owner_panel"))
-        async def op(e):
-            if e.sender_id != OWNER_ID:
-                return await e.answer("Owner only", alert=True)
-            try:
-                from ApexSpam.modules.owner_panel import _text as t, _buttons as b
-                await e.edit(t(), buttons=b(), parse_mode="html")
-            except Exception:
-                await e.answer("Error", alert=True)
+                log.exception(f"start failed: {ex}")
 
         @c.on(events.CallbackQuery(data=b"tutorial_btn"))
         async def tutorial(e):
@@ -165,34 +111,27 @@ def register():
                 text = (
                     f"{header('tutorial', '🎓')}\n\n"
                     + quote(
-                        "<b>📌 Step 1 — Prefix</b>\n"
+                        f"<b>① Prefix</b>\n"
                         f"Type <code>{HNDLR}</code> <code>!</code> <code>/</code> before any command.\n\n"
-                        "<b>📌 Step 2 — Help</b>\n"
-                        f"<code>{HNDLR}help</code> — see all categories\n\n"
-                        "<b>📌 Step 3 — Raid</b>\n"
+                        f"<b>② Help</b>\n"
+                        f"<code>{HNDLR}help</code> — categories\n\n"
+                        f"<b>③ Raid</b>\n"
                         f"<code>{HNDLR}raid 5 @user</code>\n"
                         f"<code>{HNDLR}raid 5</code> (reply to target)\n"
-                        f"Or use <code>{HNDLR}rraid 3</code> — auto-fire on their next message\n\n"
-                        "<b>📌 Step 4 — Font</b>\n"
-                        f"<code>{HNDLR}font</code> — change style of all raid data\n\n"
-                        "<b>📌 Step 5 — Custom commands</b>\n"
-                        f"<code>{HNDLR}setcmd hello Hi there!</code>\n"
-                        f"Then just type <code>{HNDLR}hello</code> — only you see it\n"
-                        f"Manage: <code>{HNDLR}mycmds</code> / <code>{HNDLR}delcmd name</code>\n\n"
-                        "<b>📌 Sudo users</b>\n"
-                        "You can add/remove <b>only the users you added yourself</b>.\n"
-                        "Owner can override anything.\n\n"
-                        "<b>📌 Stop any running raid</b>\n"
-                        f"<code>{HNDLR}stop</code>",
+                        f"<code>{HNDLR}rraid 3</code> — auto-fire on their next msg\n"
+                        f"<code>{HNDLR}stop</code> — abort\n\n"
+                        f"<b>④ Font</b>\n"
+                        f"<code>{HNDLR}font</code> — style all raid data\n\n"
+                        f"<b>⑤ Custom commands</b>\n"
+                        f"<code>{HNDLR}setcmd hi Hello!</code> → <code>{HNDLR}hi</code>\n"
+                        f"<code>{HNDLR}mycmds</code> / <code>{HNDLR}delcmd hi</code>",
                         expandable=True,
                     )
                     + f"\n{footer()}"
                 )
-                await e.edit(
-                    text,
-                    buttons=[[ib("« Back", b"start_back", "primary")]],
-                    parse_mode="html",
-                )
+                await e.edit(text,
+                             buttons=[[ib("« Back", b"start_back", "primary")]],
+                             parse_mode="html")
             except Exception:
                 pass
 
@@ -201,6 +140,26 @@ def register():
             try:
                 me = await e.client.get_me()
                 await e.edit(await _build(e, me.username or "bot"),
-                             buttons=_buttons(e.sender_id), parse_mode="html")
+                             buttons=_buttons(e.sender_id),
+                             parse_mode="html")
+            except Exception:
+                pass
+
+        # legacy callbacks (keep to avoid dead buttons)
+        @c.on(events.CallbackQuery(data=b"about_btn"))
+        @c.on(events.CallbackQuery(data=b"status_btn"))
+        async def legacy(e):
+            try:
+                me = await e.client.get_me()
+                await e.edit(
+                    f"{header('about', '⚡')}\n\n"
+                    + quote(
+                        f"◈ <b>Bot</b>   : <code>@{me.username}</code>\n"
+                        f"◈ <b>Prefix</b>: <code>{HNDLR}</code>"
+                    )
+                    + f"\n{footer()}",
+                    buttons=[[ib("« Back", b"start_back", "primary")]],
+                    parse_mode="html",
+                )
             except Exception:
                 pass
