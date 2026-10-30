@@ -63,8 +63,9 @@ def create_clients():
     clients = []
     for idx, tok in enumerate(tokens, start=1):
         cli = TelegramClient(
-            f"X{idx}", API_ID, API_HASH,
-            session=MemorySession(),
+            MemorySession(),
+            API_ID,
+            API_HASH,
             connection_retries=5,
             retry_delay=2,
         )
