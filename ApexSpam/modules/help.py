@@ -5,9 +5,9 @@ from ApexSpam.buttons import ib
 from ApexSpam import roles
 
 PAGES = {
-    "help_raid": ("raid", "🔫", (
-        "raid sraid craid qraid abuse flirt hraid hrraid loveraid gm ga gn emoji"
-    ), "`CMD COUNT @user` / reply"),
+    "help_raid": ("raid", "🔫",
+        "raid sraid craid qraid abuse flirt hraid hrraid loveraid gm ga gn emoji",
+        "`CMD COUNT @user` / reply"),
     "help_spam": ("spam", "💬", "spam", "`spam COUNT TEXT` / reply"),
     "help_extra": ("extra", "🛠️", "ping alive id leave gcdiag", "basic"),
     "help_admin": ("admin", "🛡️", "setpic delpic setcaption font axlogs axreboot reboot", "Owner"),
@@ -19,9 +19,7 @@ PAGES = {
 
 def _page(key):
     name, emoji, cmds, perm = PAGES[key]
-    lines = "\n".join(
-        f"<code>{HNDLR}{x}</code>" for x in cmds.split()
-    )
+    lines = "\n".join(f"<code>{HNDLR}{x}</code>" for x in cmds.split())
     return (
         f"{header(name, emoji)}\n\n"
         + quote(lines, expandable=True)
