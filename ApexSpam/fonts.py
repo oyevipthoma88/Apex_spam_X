@@ -14,6 +14,50 @@ def _map(start, chars):
     return {c: chr(start + i) for i, c in enumerate(chars)}
 
 
+_STYLED_RANGES = [
+    (0x1D400, 0x1D419, 'A'),  # bold A-Z
+    (0x1D41A, 0x1D433, 'a'),  # bold a-z
+    (0x1D434, 0x1D44D, 'A'),  # italic A-Z
+    (0x1D44E, 0x1D467, 'a'),  # italic a-z
+    (0x1D468, 0x1D481, 'A'),  # bold italic A-Z
+    (0x1D482, 0x1D49B, 'a'),  # bold italic a-z
+    (0x1D4D0, 0x1D4E9, 'A'),  # script A-Z
+    (0x1D4EA, 0x1D503, 'a'),  # script a-z
+    (0x1D538, 0x1D551, 'A'),  # double-struck A-Z
+    (0x1D552, 0x1D56B, 'a'),  # double-struck a-z
+    (0x1D5A0, 0x1D5B9, 'A'),  # sans-serif A-Z
+    (0x1D5BA, 0x1D5D3, 'a'),  # sans-serif a-z
+    (0x1D670, 0x1D689, 'A'),  # mono A-Z
+    (0x1D68A, 0x1D6A3, 'a'),  # mono a-z
+]
+
+_SMALL_CAPS = {
+    'ᴀ':'A','ʙ':'B','ᴄ':'C','ᴅ':'D','ᴇ':'E','ꜰ':'F','ɢ':'G','ʜ':'H',
+    'ɪ':'I','ᴊ':'J','ᴋ':'K','ʟ':'L','ᴍ':'M','ɴ':'N','ᴏ':'O','ᴘ':'P',
+    'ǫ':'Q','ʀ':'R','ꜱ':'S','ᴛ':'T','ᴜ':'U','ᴠ':'V','ᴡ':'W','x':'x',
+    'ʏ':'Y','ᴢ':'Z',
+}
+
+
+def asciify(text):
+    """Strip styled Unicode back to plain ASCII so fonts can re-style."""
+    if not text:
+        return text
+    out = []
+    for ch in text:
+        if ch in _SMALL_CAPS:
+            out.append(_SMALL_CAPS[ch])
+            continue
+        cp = ord(ch)
+        mapped = None
+        for start, end, base in _STYLED_RANGES:
+            if start <= cp <= end:
+                mapped = chr(ord(base) + (cp - start))
+                break
+        out.append(mapped if mapped else ch)
+    return "".join(out)
+
+
 _FONTS = {
     "normal": {},
     "bold": {**_map(0x1D400, _UP), **_map(0x1D41A, _LO), **_map(0x1D7CE, _DG)},
@@ -62,6 +106,7 @@ def transform(text):
     table = _FONTS.get(ACTIVE_FONT)
     if not table:
         return text
+    text = asciify(text)
     out, last = [], 0
     for m in _PROTECT.finditer(text):
         out.append(_tr(text[last:m.start()], table))
@@ -154,7 +199,12 @@ async def send_raw(client, *a, **kw):
 
 
 async def edit_raw(client, *a, **kw):
-    return await _orig["edit"](client, *a, **kw)
+    try:
+        return await _orig["edit"](client, *a, **kw)
+    except Exception as e:
+        if "NotModified" in type(e).__name__:
+            return None
+        raise
 
 
 async def set_font(name):
