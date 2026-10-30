@@ -5,7 +5,7 @@ from ApexSpam.ui import header, quote, kv
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}gcdiag(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]gcdiag(?: |$)"))
         async def gcdiag(e):
             if e.sender_id != OWNER_ID:
                 return

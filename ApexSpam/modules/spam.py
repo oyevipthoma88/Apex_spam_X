@@ -24,7 +24,7 @@ async def _chat_title(e):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}spam(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]spam(?: |$)"))
         async def spam(event):
             if not _authed(event.sender_id):
                 return

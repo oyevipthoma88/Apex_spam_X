@@ -49,7 +49,7 @@ def _card(rtt, db, username):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}ping(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]ping(?: |$)"))
         async def ping(e):
             if is_dup(e.chat_id, e.id):
                 return
@@ -60,7 +60,7 @@ def register():
             db = await _mongo_ms()
             await msg.edit(_card(rtt, db, me.username or "bot"), parse_mode="html")
 
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}reboot(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]reboot(?: |$)"))
         async def reboot(e):
             if e.sender_id != OWNER_ID:
                 return

@@ -104,13 +104,13 @@ _GATE_SUDO = {"help_raid", "help_spam", "help_mod"}
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}help(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]help(?: |$)"))
         async def help_cmd(e):
             if is_dup(e.chat_id, e.id):
                 return
             await e.reply(_menu_text(e.sender_id), buttons=_menu_buttons(e.sender_id), parse_mode="html")
 
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}help (\w+)(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]help (\w+)(?: |$)"))
         async def help_text(e):
             key = f"help_{e.pattern_match.group(1).lower()}"
             uid = e.sender_id

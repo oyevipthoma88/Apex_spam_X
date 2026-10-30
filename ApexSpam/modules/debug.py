@@ -25,7 +25,7 @@ def register():
                 log.exception(f"log_all failed: {ex}")
 
         # ── .diag — module load status ──
-        @c.on(events.NewMessage(pattern=rf"\{HNDLR}diag(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]diag(?: |$)"))
         async def diag(e):
             if e.sender_id != OWNER_ID:
                 return

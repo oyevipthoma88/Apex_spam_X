@@ -85,7 +85,7 @@ async def _send(e, text):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=r"^/start(?:@\w+)?(?:\s|$)"))
+        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]start(?:@\w+)?(?:\s|$)"))
         async def start(e):
             if is_dup(e.chat_id, e.id):
                 return
@@ -159,6 +159,17 @@ def register():
                 log.exception(f"status failed: {ex}")
                 try: await e.answer("Error", alert=True)
                 except Exception: pass
+
+        @c.on(events.CallbackQuery(data=b"owner_panel"))
+        async def op(e):
+            from ApexSpam import OWNER_ID
+            if e.sender_id != OWNER_ID:
+                return await e.answer("Owner only", alert=True)
+            try:
+                from ApexSpam.modules.owner_panel import _text as _dev_text, _buttons as _dev_buttons
+                await e.edit(_dev_text(), buttons=_dev_buttons(), parse_mode="html")
+            except Exception:
+                await e.answer("Error", alert=True)
 
         @c.on(events.CallbackQuery(data=b"start_back"))
         async def back(e):
