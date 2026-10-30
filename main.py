@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 import config
-from ApexSpam import fonts, buttons
+from ApexSpam import fonts, buttons, state
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,10 +36,10 @@ def load_modules():
             fn = getattr(mod, "register", None)
             if callable(fn):
                 fn()
-                log.info(f"✅ loaded+registered: {name}")
-            else:
-                log.info(f"✅ loaded: {name}")
+            state.LOADED[name] = "OK"
+            log.info(f"✅ loaded: {name}")
         except Exception as e:
+            state.LOADED[name] = f"{type(e).__name__}: {e}"
             log.exception(f"❌ failed: {name} -> {e}")
 
 

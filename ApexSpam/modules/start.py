@@ -1,3 +1,4 @@
+"""Apex Spam X — /start with full fallback chain + logging."""
 import logging
 import time
 from io import BytesIO
@@ -13,29 +14,26 @@ log = logging.getLogger("ApexSpam.start")
 
 DEFAULT_CAPTION = "{header}\n\n{greet}\n\n{q1}\n\n{q2}\n\n{meta}"
 
-BUTTONS = [
-    [ib("⚡  C O M M A N D S", b"help_back", "primary")],
-    [ib("📖 About", b"about_btn", "primary"), ib("🛡️ Status", b"status_btn", "success")],
-    [ub("📢 Channel", "https://t.me/ApexSpamXSupport", "primary"),
-     ub("💬 Support", "https://t.me/ApexSpamXSupport", "primary")],
-]
 
-
-def _fallback():
-    return (
-        f"{header('apex spam x', '⚡')}\n\n"
-        + quote("<i>Bot is online.</i>\nUse <code>/help</code>")
-    )
+def _buttons():
+    return [
+        [ib("⚡  C O M M A N D S", b"help_back", "primary")],
+        [ib("📖 About", b"about_btn", "primary"), ib("🛡️ Status", b"status_btn", "success")],
+        [ub("📢 Channel", "https://t.me/ApexSpamXSupport", "primary"),
+         ub("💬 Support", "https://t.me/ApexSpamXSupport", "primary")],
+    ]
 
 
 async def _build(e, bot_username):
     up = int(time.time() - START_TIME)
     h, r = divmod(up, 3600)
     m, s = divmod(r, 60)
+    tpl = None
     try:
         tpl = await get_value("start_caption")
-    except Exception:
-        tpl = None
+    except Exception as ex:
+        log.warning(f"get_value(start_caption): {ex}")
+
     text = safe_format(
         tpl if isinstance(tpl, str) and tpl.strip() else DEFAULT_CAPTION,
         header=header("apex spam x", "⚡"),
@@ -48,53 +46,72 @@ async def _build(e, bot_username):
         ),
         meta=f"{divider()}\n<i>Tap below to explore</i> 👇",
     )
-    return text.strip() or _fallback()
+    return text.strip() or "⚡ <b>Apex Spam X</b> — online"
 
 
 async def _send(e, text):
-    pic = ext = None
+    # Level 1: photo + caption
     try:
         pic = await get_value("start_pic")
         ext = await get_value("start_pic_ext") or "jpg"
-    except Exception as ex:
-        log.exception(f"start: settings read failed: {ex}")
-
-    if pic:
-        try:
+        if pic:
             stream = BytesIO(bytes(pic))
             stream.name = f"apex_start.{ext}"
-            await e.reply(text, file=stream, buttons=BUTTONS, parse_mode="html")
+            log.info(f"start:L1 photo {len(pic)}B")
+            await e.reply(text, file=stream, buttons=_buttons(), parse_mode="html")
+            log.info("start:L1 photo OK")
             return
-        except Exception as ex:
-            log.exception(f"start: photo send failed: {ex}")
-
-    try:
-        await e.reply(text, buttons=BUTTONS, parse_mode="html")
     except Exception as ex:
-        log.exception(f"start: text send failed: {ex}")
-        try:
-            await e.reply(_fallback(), buttons=BUTTONS, parse_mode="html")
-        except Exception:
-            await e.reply("Apex Spam X — online ✅")
+        log.exception(f"start:L1 photo failed: {ex}")
+
+    # Level 2: HTML text
+    try:
+        log.info("start:L2 HTML text")
+        await e.reply(text, buttons=_buttons(), parse_mode="html")
+        log.info("start:L2 text OK")
+        return
+    except Exception as ex:
+        log.exception(f"start:L2 HTML failed: {ex}")
+
+    # Level 3: plain text
+    try:
+        log.info("start:L3 plain fallback")
+        await e.reply("Apex Spam X is online. Use /help to explore.")
+        log.info("start:L3 plain OK")
+    except Exception as ex:
+        log.exception(f"start:L3 plain failed: {ex}")
 
 
 def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=r"^/start(?:@\w+)?(?:\s|$)"))
         async def start(e):
-            log.info(f"/start hit uid={e.sender_id} chat={e.chat_id} private={e.is_private}")
+            try:
+                log.info(f"START-HIT uid={e.sender_id} chat={e.chat_id} priv={e.is_private}")
+            except Exception:
+                pass
+
             try:
                 me = await e.client.get_me()
-                if not e.is_private:
-                    await e.reply(f"👋 DM me to start — @{me.username or 'bot'}")
-                    return
-                await _send(e, await _build(e, me.username or "bot"))
+                username = me.username or "bot"
             except Exception as ex:
-                log.exception(f"start failed: {ex}")
+                log.exception(f"start:get_me failed: {ex}")
+                username = "bot"
+
+            if not e.is_private:
                 try:
-                    await e.reply("⚡ Apex Spam X is online. Use /help")
-                except Exception:
-                    pass
+                    await e.reply(f"👋 DM me to start — @{username}")
+                except Exception as ex:
+                    log.exception(f"start:group reply failed: {ex}")
+                return
+
+            try:
+                text = await _build(e, username)
+            except Exception as ex:
+                log.exception(f"start:build failed: {ex}")
+                text = "⚡ <b>Apex Spam X</b> — online"
+
+            await _send(e, text)
 
         @c.on(events.CallbackQuery(data=b"about_btn"))
         async def about(e):
@@ -116,7 +133,8 @@ def register():
                 await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]], parse_mode="html")
             except Exception as ex:
                 log.exception(f"about failed: {ex}")
-                await e.answer("Something went wrong", alert=True)
+                try: await e.answer("Error", alert=True)
+                except Exception: pass
 
         @c.on(events.CallbackQuery(data=b"status_btn"))
         async def status(e):
@@ -136,13 +154,15 @@ def register():
                 await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]], parse_mode="html")
             except Exception as ex:
                 log.exception(f"status failed: {ex}")
-                await e.answer("Something went wrong", alert=True)
+                try: await e.answer("Error", alert=True)
+                except Exception: pass
 
         @c.on(events.CallbackQuery(data=b"start_back"))
         async def back(e):
             try:
                 me = await e.client.get_me()
-                await e.edit(await _build(e, me.username or "bot"), buttons=BUTTONS, parse_mode="html")
+                await e.edit(await _build(e, me.username or "bot"), buttons=_buttons(), parse_mode="html")
             except Exception as ex:
                 log.exception(f"back failed: {ex}")
-                await e.answer("Something went wrong", alert=True)
+                try: await e.answer("Error", alert=True)
+                except Exception: pass
