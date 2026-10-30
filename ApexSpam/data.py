@@ -741,7 +741,7 @@ RAID.extend([
     "loading... 100% raid", "escape nahi hai", "tera ping bhi slow hai",
     "clutch kar dikha", "practice karke aa", "next match ready?", "clan chhod de",
     "gully cricket ke level pe hai", "0-10 khel ke aaya hai", "aim bhi slow",
-    "screenshot bhej, proof chahiye", "public match me mil", "tera rank fake hai",
+    "screenshot bhej, proof chahiye", "tera rank fake hai",
 ])
 
 ABUSE.extend([
@@ -875,7 +875,7 @@ RAID.extend([
     "loading 100% raid", "escape nahi hai", "tera ping bhi slow hai",
     "clutch kar dikha", "practice karke aa", "next match ready?", "clan chhod de",
     "gully cricket level", "0-10 khela hai", "aim bhi slow",
-    "screenshot bhej", "public match me mil", "tera rank fake hai",
+    "screenshot bhej", "tera rank fake hai",
 ])
 ABUSE.extend([
     "noob saala practice kar", "bot se panga mat le", "aim slow dimaag slower",

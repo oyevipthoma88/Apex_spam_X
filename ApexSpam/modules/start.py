@@ -1,4 +1,4 @@
-"""Apex Spam X — /start (owner panel, no personal refs)."""
+"""Apex Spam X — /start (multi-prefix, owner panel, error-safe)."""
 import logging
 import time
 from io import BytesIO
@@ -8,7 +8,6 @@ from telethon import events
 from ApexSpam import HNDLR, START_TIME, CLIENTS, OWNER_ID
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
 from ApexSpam.buttons import ib
-from ApexSpam.dedup import is_dup
 from models.bot_settings import get_value
 
 log = logging.getLogger("ApexSpam.start")
@@ -31,12 +30,10 @@ async def _build(e, bot_username):
     up = int(time.time() - START_TIME)
     h, r = divmod(up, 3600)
     m, s = divmod(r, 60)
-    tpl = None
     try:
         tpl = await get_value("start_caption")
-    except Exception as ex:
-        log.warning(f"get_value: {ex}")
-
+    except Exception:
+        tpl = None
     text = safe_format(
         tpl if isinstance(tpl, str) and tpl.strip() else DEFAULT_CAPTION,
         header=header("apex spam x", "⚡"),
@@ -76,16 +73,17 @@ async def _send(e, text):
 
 
 def register():
+    log.info(f"registering start.py | HNDLR={HNDLR!r} | clients={len(CLIENTS)}")
+
     for c in CLIENTS:
+        # /start with multi-prefix
         @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]start(?:@\w+)?(?:\s|$)"))
         async def start(e):
-            if is_dup(e.chat_id, e.id):
-                return
+            log.info(f"START-HIT uid={e.sender_id} priv={e.is_private}")
             try:
                 me = await e.client.get_me()
                 username = me.username or "bot"
-            except Exception as ex:
-                log.exception(f"get_me: {ex}")
+            except Exception:
                 username = "bot"
 
             if not e.is_private:
@@ -113,14 +111,13 @@ def register():
                         f"◈ <b>Engine</b>   : <code>Telethon</code>\n"
                         f"◈ <b>Database</b> : <code>MongoDB</code>"
                     )
-                    + "\n\n"
-                    + quote("👑 <b>Powered by Apex Spam X</b>")
+                    + "\n\n" + quote("👑 <b>Powered by Apex Spam X</b>")
                     + f"\n{footer()}"
                 )
                 await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]],
                              parse_mode="html")
-            except Exception as ex:
-                log.exception(f"about: {ex}")
+            except Exception:
+                pass
 
         @c.on(events.CallbackQuery(data=b"status_btn"))
         async def status(e):
@@ -138,8 +135,8 @@ def register():
                 )
                 await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]],
                              parse_mode="html")
-            except Exception as ex:
-                log.exception(f"status: {ex}")
+            except Exception:
+                pass
 
         @c.on(events.CallbackQuery(data=b"owner_panel"))
         async def op(e):
@@ -148,8 +145,7 @@ def register():
             try:
                 from ApexSpam.modules.owner_panel import _text as t, _buttons as b
                 await e.edit(t(), buttons=b(), parse_mode="html")
-            except Exception as ex:
-                log.exception(f"owner_panel: {ex}")
+            except Exception:
                 await e.answer("Error", alert=True)
 
         @c.on(events.CallbackQuery(data=b"start_back"))
@@ -158,5 +154,5 @@ def register():
                 me = await e.client.get_me()
                 await e.edit(await _build(e, me.username or "bot"),
                              buttons=_buttons(e.sender_id), parse_mode="html")
-            except Exception as ex:
-                log.exception(f"back: {ex}")
+            except Exception:
+                pass

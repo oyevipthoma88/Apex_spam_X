@@ -8,7 +8,7 @@ from telethon.errors import (
     ChatNotModifiedError,
     FloodWaitError,
 )
-from telethon.tl.functions.channels import EditBannedRequest
+from telethon.tl.functions.channels import EditBannedRequest, EditTitleRequest
 from telethon.tl.types import (
     ChannelParticipantsAdmins,
     ChannelParticipantsKicked,
@@ -125,13 +125,13 @@ def register():
                 # zero-width space makes each title unique — avoids ChatNotModifiedError
                 title = base + ("\u200b" * (i + 1))
                 try:
-                    await e.client.edit_title(e.chat_id, title)
+                    await e.client(EditTitleRequest(channel=e.chat_id, title=title))
                     changed += 1
                     log.info(f"nc: title {i+1}/{count} → {base!r}")
                 except ChatNotModifiedError:
                     # still try different suffix
                     try:
-                        await e.client.edit_title(e.chat_id, base + "\u200b" * (i + 2))
+                        await e.client(EditTitleRequest(channel=e.chat_id, title=base + "\u200b" * (i + 2)))
                         changed += 1
                     except Exception as ex:
                         errors += 1
@@ -145,7 +145,7 @@ def register():
                     log.warning(f"nc flood wait {wait}s")
                     await asyncio.sleep(wait)
                     try:
-                        await e.client.edit_title(e.chat_id, base + "\u200b" * (i + 2))
+                        await e.client(EditTitleRequest(channel=e.chat_id, title=base + "\u200b" * (i + 2)))
                         changed += 1
                     except Exception:
                         errors += 1

@@ -5,7 +5,7 @@ import time
 log = logging.getLogger("ApexSpam.dedup")
 
 _seen = {}
-_WINDOW = 5.0
+_WINDOW = 4.0
 _patched = False
 
 
@@ -15,7 +15,6 @@ def _prune(now):
 
 
 def is_dup(chat_id, msg_id):
-    """True if (chat, msg) already handled in last 5s."""
     key = (chat_id, msg_id)
     now = time.time()
     _prune(now)
@@ -25,22 +24,17 @@ def is_dup(chat_id, msg_id):
     return False
 
 
-def try_claim(chat_id, msg_id):
-    """Atomic claim — True on first call, False after."""
-    return not is_dup(chat_id, msg_id)
-
-
 def clear():
     _seen.clear()
 
 
 def patch():
-    """Wrap TelegramClient.on so EVERY handler dedups by (chat, msg)."""
     global _patched
     if _patched:
         return True
     try:
         from telethon import TelegramClient
+
         orig_on = TelegramClient.on
 
         def patched_on(self, event, *args, **kwargs):
