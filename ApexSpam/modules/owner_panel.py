@@ -1,11 +1,15 @@
-"""Apex Spam X — owner panel: name/bio/pic via interactive reply."""
+"""Apex Spam X — owner panel: name/bio/photo for ALL bots."""
 import logging
 
-from telethon import events
-from telethon.tl.functions.account import UpdateProfileRequest
+from telethon import events, TelegramClient
+from telethon.sessions import StringSession
+from telethon.tl.functions.bots import SetBotInfoRequest
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
 
-from ApexSpam import HNDLR, OWNER_ID, CLIENTS, HEROKU_APP_NAME, HEROKU_API_KEY
+from ApexSpam import (
+    HNDLR, OWNER_ID, CLIENTS, HEROKU_APP_NAME, HEROKU_API_KEY,
+    USER_SESSION, API_ID, API_HASH,
+)
 from ApexSpam.ui import header, quote, kv, footer, divider
 from ApexSpam.buttons import ib
 from models.whitelist import add_gc, list_gcs
@@ -13,8 +17,70 @@ from models.sudo import mongo_ids
 from models.admins import add_admin, remove_admin, list_admins
 
 log = logging.getLogger("ApexSpam.owner_panel")
-PENDING = {}         # (chat_id) -> (action, prompt_msg_id)
-PENDING_MOD = {}     # (chat_id, user_id) -> "banall" | "unbanall"
+
+PENDING = {}      # chat_id -> (action, prompt_msg_id)
+_user_client = None
+
+
+async def _get_user_client():
+    global _user_client
+    if _user_client is not None:
+        return _user_client
+    if not USER_SESSION:
+        return None
+    try:
+        uc = TelegramClient(StringSession(USER_SESSION), API_ID, API_HASH)
+        await uc.connect()
+        if not await uc.is_user_authorized():
+            await uc.disconnect()
+            return None
+        _user_client = uc
+        log.info("✅ user session connected (photo support)")
+        return uc
+    except Exception as e:
+        log.warning(f"user client failed: {e}")
+        return None
+
+
+async def _apply_name(name: str):
+    ok = 0
+    for c in CLIENTS:
+        try:
+            await c(SetBotInfoRequest(lang_code="", name=name))
+            ok += 1
+        except Exception as ex:
+            log.warning(f"name fail: {ex}")
+    return ok
+
+
+async def _apply_bio(bio: str):
+    ok = 0
+    for c in CLIENTS:
+        try:
+            await c(SetBotInfoRequest(lang_code="", about=bio, description=bio))
+            ok += 1
+        except Exception as ex:
+            log.warning(f"bio fail: {ex}")
+    return ok
+
+
+async def _apply_pic(data: bytes):
+    """Profile photo requires user session (bot cannot set own photo)."""
+    uc = await _get_user_client()
+    if uc is None:
+        return -1  # signal "needs USER_SESSION"
+    ok = 0
+    for c in CLIENTS:
+        try:
+            me = await c.get_me()
+            uploaded = await uc.upload_file(data)
+            await uc(UploadProfilePhotoRequest(
+                fallback=True, bot=me.username, file=uploaded,
+            ))
+            ok += 1
+        except Exception as ex:
+            log.warning(f"pic fail @{getattr(me,'username','?')}: {ex}")
+    return ok
 
 
 def _text():
@@ -23,6 +89,7 @@ def _text():
         + quote(
             f"{kv('Clients', len(CLIENTS))}\n"
             f"{kv('Owner', OWNER_ID)}\n"
+            f"{kv('User session', '✅ set' if USER_SESSION else '❌ missing')}\n"
             f"{kv('Heroku', HEROKU_APP_NAME or 'not set')}",
             expandable=True,
         )
@@ -46,40 +113,6 @@ def _buttons():
     ]
 
 
-async def _apply_name(n):
-    ok = 0
-    for c in CLIENTS:
-        try:
-            await c(UpdateProfileRequest(first_name=n))
-            ok += 1
-        except Exception as ex:
-            log.warning(f"name fail: {ex}")
-    return ok
-
-
-async def _apply_bio(b):
-    ok = 0
-    for c in CLIENTS:
-        try:
-            await c(UpdateProfileRequest(about=b))
-            ok += 1
-        except Exception as ex:
-            log.warning(f"bio fail: {ex}")
-    return ok
-
-
-async def _apply_pic(data):
-    ok = 0
-    for c in CLIENTS:
-        try:
-            uploaded = await c.upload_file(data)
-            await c(UploadProfilePhotoRequest(file=uploaded))
-            ok += 1
-        except Exception as ex:
-            log.warning(f"pic fail: {ex}")
-    return ok
-
-
 async def _resolve(e):
     parts = e.text.split(maxsplit=1)
     arg = parts[1].strip() if len(parts) > 1 else ""
@@ -99,13 +132,13 @@ async def _resolve(e):
 
 def register():
     for c in CLIENTS:
-        # ── .dev opens panel ──
+        # ── panel ──
         @c.on(events.NewMessage(pattern=r"^[\.!/]dev(?: |$)"))
         async def dev(e):
             if e.sender_id != OWNER_ID: return
             await e.reply(_text(), buttons=_buttons(), parse_mode="html")
 
-        # ── Button: setname → prompt for reply ──
+        # ── button prompts ──
         @c.on(events.CallbackQuery(data=b"op_setname"))
         async def cb_setname(e):
             if e.sender_id != OWNER_ID:
@@ -113,11 +146,11 @@ def register():
             m = await e.edit(
                 f"{header('set name', '✏️')}\n\n"
                 + quote("Reply to this message with the <b>new name</b>.\n"
-                        f"Or send: <code>.setname New Name</code>"),
+                        f"Or: <code>.setname New Name</code>"),
                 parse_mode="html",
             )
             PENDING[e.chat_id] = ("setname", m.id)
-            await e.answer("Reply with new name")
+            await e.answer("Reply with name")
 
         @c.on(events.CallbackQuery(data=b"op_setbio"))
         async def cb_setbio(e):
@@ -126,16 +159,18 @@ def register():
             m = await e.edit(
                 f"{header('set bio', '📝')}\n\n"
                 + quote("Reply to this message with the <b>new bio</b>.\n"
-                        f"Or send: <code>.setbio Your bio</code>"),
+                        f"Or: <code>.setbio Your bio</code>"),
                 parse_mode="html",
             )
             PENDING[e.chat_id] = ("setbio", m.id)
-            await e.answer("Reply with new bio")
+            await e.answer("Reply with bio")
 
         @c.on(events.CallbackQuery(data=b"op_setpic"))
         async def cb_setpic(e):
             if e.sender_id != OWNER_ID:
                 return await e.answer("Owner only", alert=True)
+            if not USER_SESSION:
+                return await e.answer("USER_SESSION missing in Heroku", alert=True)
             m = await e.edit(
                 f"{header('set photo', '🖼️')}\n\n"
                 + quote("Reply to this message with a <b>photo</b>.\n"
@@ -145,17 +180,18 @@ def register():
             PENDING[e.chat_id] = ("setpic", m.id)
             await e.answer("Reply with photo")
 
-        # ── Direct commands ──
+        # ── direct commands ──
         @c.on(events.NewMessage(pattern=r"^[\.!/]setname(?: |$)"))
         async def setname(e):
             if e.sender_id != OWNER_ID: return
             parts = e.text.split(maxsplit=1)
             if len(parts) < 2:
-                return await e.reply(f"<code>.setname New Name</code>", parse_mode="html")
-            ok = await _apply_name(parts[1][:64])
+                return await e.reply("<code>.setname New Name</code>", parse_mode="html")
+            name = parts[1][:64]
+            ok = await _apply_name(name)
             await e.reply(
                 f"{header('set name', '✏️')}\n\n"
-                + quote(f"{kv('Name', parts[1][:64])}\n{kv('Updated', f'{ok}/{len(CLIENTS)}')}",
+                + quote(f"{kv('Name', name)}\n{kv('Updated', f'{ok}/{len(CLIENTS)}')}",
                         expandable=True),
                 parse_mode="html",
             )
@@ -165,11 +201,12 @@ def register():
             if e.sender_id != OWNER_ID: return
             parts = e.text.split(maxsplit=1)
             if len(parts) < 2:
-                return await e.reply(f"<code>.setbio Your bio</code>", parse_mode="html")
-            ok = await _apply_bio(parts[1][:140])
+                return await e.reply("<code>.setbio Your bio</code>", parse_mode="html")
+            bio = parts[1][:140]
+            ok = await _apply_bio(bio)
             await e.reply(
                 f"{header('set bio', '📝')}\n\n"
-                + quote(f"{kv('Bio', parts[1][:40])}\n{kv('Updated', f'{ok}/{len(CLIENTS)}')}",
+                + quote(f"{kv('Bio', bio[:40])}\n{kv('Updated', f'{ok}/{len(CLIENTS)}')}",
                         expandable=True),
                 parse_mode="html",
             )
@@ -177,6 +214,11 @@ def register():
         @c.on(events.NewMessage(pattern=r"^[\.!/]setbotpic(?: |$)"))
         async def setbotpic(e):
             if e.sender_id != OWNER_ID: return
+            if not USER_SESSION:
+                return await e.reply(
+                    "❌ <code>USER_SESSION</code> Heroku me set karo (profile photo ke liye user session chahiye).",
+                    parse_mode="html",
+                )
             if not e.reply_to_msg_id:
                 return await e.reply("Reply to a photo.", parse_mode="html")
             r = await e.get_reply_message()
@@ -186,13 +228,15 @@ def register():
             if not data:
                 return await e.reply("❌ Download failed.", parse_mode="html")
             ok = await _apply_pic(data)
+            if ok == -1:
+                return await e.reply("❌ USER_SESSION missing.", parse_mode="html")
             await e.reply(
                 f"{header('set photo', '🖼️')}\n\n"
                 + quote(f"{kv('Updated', f'{ok}/{len(CLIENTS)}')}"),
                 parse_mode="html",
             )
 
-        # ── Interactive reply handler ──
+        # ── interactive reply ──
         @c.on(events.NewMessage())
         async def handle_pending(e):
             if e.sender_id != OWNER_ID: return
@@ -203,7 +247,7 @@ def register():
             if e.reply_to_msg_id != prompt_id: return
             PENDING.pop(e.chat_id, None)
 
-            if action == "setname":
+            if action == "setname" and e.text:
                 ok = await _apply_name(e.text[:64])
                 await e.reply(
                     f"{header('set name', '✏️')}\n\n"
@@ -211,7 +255,7 @@ def register():
                             expandable=True),
                     parse_mode="html",
                 )
-            elif action == "setbio":
+            elif action == "setbio" and e.text:
                 ok = await _apply_bio(e.text[:140])
                 await e.reply(
                     f"{header('set bio', '📝')}\n\n"
@@ -232,7 +276,7 @@ def register():
                     parse_mode="html",
                 )
 
-        # ── Heroku update ──
+        # ── heroku / gc / list ──
         @c.on(events.CallbackQuery(data=b"op_update"))
         async def op_update(e):
             if e.sender_id != OWNER_ID: return await e.answer("Owner only", alert=True)
@@ -249,7 +293,6 @@ def register():
             except Exception as ex:
                 await e.answer(str(ex)[:50], alert=True)
 
-        # ── GC whitelist ──
         @c.on(events.CallbackQuery(data=b"op_sudogc"))
         async def op_sudogc(e):
             if e.sender_id != OWNER_ID: return await e.answer("Owner only", alert=True)
@@ -283,24 +326,24 @@ def register():
                 parse_mode="html",
             )
 
-        # ── Admin / Sudo prompts ──
-        for data, action, help_txt in [
-            (b"op_addadmin", "addadmin", ".addadmin <id|@user|reply>"),
-            (b"op_deladmin", "deladmin", ".deladmin <id|@user|reply>"),
-            (b"op_addsudo", "addsudo", ".addsudo <id|@user|reply>"),
-            (b"op_delsudo", "delsudo", ".delsudo <id|@user|reply>"),
+        for data, help_txt in [
+            (b"op_addadmin", ".addadmin <id|@user|reply>"),
+            (b"op_deladmin", ".deladmin <id|@user|reply>"),
+            (b"op_addsudo", ".addsudo <id|@user|reply>"),
+            (b"op_delsudo", ".delsudo <id|@user|reply>"),
         ]:
-            def _mk_cb(help_text):
+            def _mk(ht):
                 async def cb(e):
                     if e.sender_id != OWNER_ID:
                         return await e.answer("Owner only", alert=True)
                     await e.edit(
-                        f"{header('action', '👤')}\n\n" + quote(f"Send: <code>{help_text}</code>"),
+                        f"{header('action', '👤')}\n\n"
+                        + quote(f"Send: <code>{ht}</code>"),
                         buttons=[[ib("« Back", b"op_back", "primary")]],
                         parse_mode="html",
                     )
                 return cb
-            c.on(events.CallbackQuery(data=data))(_mk_cb(help_txt))
+            c.on(events.CallbackQuery(data=data))(_mk(help_txt))
 
         @c.on(events.CallbackQuery(data=b"op_close"))
         async def op_close(e):
@@ -311,7 +354,7 @@ def register():
         async def op_back(e):
             await e.edit(_text(), buttons=_buttons(), parse_mode="html")
 
-        # ── Direct admin/sudo commands ──
+        # ── admin/sudo commands ──
         @c.on(events.NewMessage(pattern=r"^[\.!/]addadmin(?: |$)"))
         async def addadmin(e):
             if e.sender_id != OWNER_ID: return
