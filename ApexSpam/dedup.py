@@ -1,21 +1,68 @@
-"""Apex Spam X — per-message dedup so 2 bots in one chat → 1 response."""
+"""Apex Spam X — global dedup via TelegramClient.on patch."""
+import logging
 import time
 
+log = logging.getLogger("ApexSpam.dedup")
+
 _seen = {}
-_WINDOW = 3.0
+_WINDOW = 5.0
+_patched = False
+
+
+def _prune(now):
+    for k in [k for k, t in _seen.items() if now - t > _WINDOW]:
+        _seen.pop(k, None)
 
 
 def is_dup(chat_id, msg_id):
+    """True if (chat, msg) already handled in last 5s."""
     key = (chat_id, msg_id)
     now = time.time()
-    # prune old
-    for k in [k for k, t in _seen.items() if now - t > _WINDOW]:
-        _seen.pop(k, None)
+    _prune(now)
     if key in _seen:
         return True
     _seen[key] = now
     return False
 
 
+def try_claim(chat_id, msg_id):
+    """Atomic claim — True on first call, False after."""
+    return not is_dup(chat_id, msg_id)
+
+
 def clear():
     _seen.clear()
+
+
+def patch():
+    """Wrap TelegramClient.on so EVERY handler dedups by (chat, msg)."""
+    global _patched
+    if _patched:
+        return True
+    try:
+        from telethon import TelegramClient
+        orig_on = TelegramClient.on
+
+        def patched_on(self, event, *args, **kwargs):
+            def deco(fn):
+                async def wrapper(e):
+                    try:
+                        cid = getattr(e, "chat_id", None)
+                        mid = getattr(e, "id", None)
+                        if cid is not None and mid is not None and is_dup(cid, mid):
+                            log.debug(f"dup skip {cid}/{mid}")
+                            return
+                    except Exception:
+                        pass
+                    return await fn(e)
+                wrapper.__name__ = getattr(fn, "__name__", "wrapped")
+                return orig_on(self, event, *args, **kwargs)(wrapper)
+            return deco
+
+        TelegramClient.on = patched_on
+        _patched = True
+        log.info("✅ dedup patcher installed (global)")
+        return True
+    except Exception as e:
+        log.exception(f"dedup patch failed: {e}")
+        return False

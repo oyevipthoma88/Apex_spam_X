@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 import config
-from ApexSpam import fonts, buttons, state, logger as xlog
+from ApexSpam import fonts, buttons, state, logger as xlog, dedup
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,6 +44,7 @@ def load_modules():
 
 
 async def main():
+    dedup.patch()
     fonts.patch()
     await fonts.sync_from_db()
     log.info(f"active font: {fonts.ACTIVE_FONT}")
