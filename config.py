@@ -1,4 +1,4 @@
-"""Apex Spam X — env + lazy client factory (no import-time side effects)."""
+"""Apex Spam X — env + lazy client factory + dummy X3..X10."""
 import os
 import sys
 import time
@@ -10,7 +10,6 @@ OWNER_ID = int(os.getenv("OWNER_ID", "0") or 0)
 CMD_HNDLR = os.getenv("CMD_HNDLR", ".") or "."
 HNDLR = CMD_HNDLR
 hl = CMD_HNDLR
-
 START_TIME = time.time()
 
 HEROKU_APP_NAME = (os.getenv("HEROKU_APP_NAME") or "").strip()
@@ -25,16 +24,49 @@ SUDO_USERS = [
 if OWNER_ID and OWNER_ID not in SUDO_USERS:
     SUDO_USERS.append(OWNER_ID)
 
-# placeholders so `from ApexSpam import X1` never explodes at import time
 CLIENTS = []
 BOT_TOKENS = []
 BOT_TOKEN = ""
+APEX_OWNER = []
+
+
+class _DummyClient:
+    """No-op stand-in so STRANGER-style @X3.on(...) never crashes."""
+    name = "dummy"
+
+    def on(self, *a, **k):
+        def deco(fn):
+            return fn
+        return deco
+
+    def add_event_handler(self, *a, **k):
+        return None
+
+    async def start(self, *a, **k):
+        return self
+
+    async def connect(self, *a, **k):
+        return True
+
+    async def disconnect(self, *a, **k):
+        return True
+
+    async def get_me(self, *a, **k):
+        return None
+
+    async def send_message(self, *a, **k):
+        return None
+
+    def __getattr__(self, item):
+        async def _noop(*a, **k):
+            return None
+        return _noop
+
+
 for _i in range(1, 11):
-    globals()[f"X{_i}"] = None
+    globals()[f"X{_i}"] = _DummyClient()
 for _i in range(2, 11):
     globals()[f"BOT_TOKEN{_i}"] = ""
-
-APEX_OWNER = []
 
 
 def _collect_tokens():
@@ -49,7 +81,6 @@ def _collect_tokens():
 
 
 def create_clients():
-    """Create Telegram clients INSIDE a running loop. Returns list of clients."""
     from telethon import TelegramClient
     from telethon.sessions import MemorySession
 
@@ -63,11 +94,8 @@ def create_clients():
     clients = []
     for idx, tok in enumerate(tokens, start=1):
         cli = TelegramClient(
-            MemorySession(),
-            API_ID,
-            API_HASH,
-            connection_retries=5,
-            retry_delay=2,
+            MemorySession(), API_ID, API_HASH,
+            connection_retries=5, retry_delay=2,
         )
         clients.append(cli)
         setattr(sys.modules[__name__], f"X{idx}", cli)
