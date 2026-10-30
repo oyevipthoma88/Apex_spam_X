@@ -181,7 +181,7 @@ def register():
             text, rows = _main()
             await e.reply(text, buttons=rows, parse_mode="html")
 
-        @c.on(events.CallbackQuery(pattern=rb"opx:(\w+)"))
+        @c.on(events.CallbackQuery(pattern=r"opx:(\w+)"))
         async def opx(e):
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)

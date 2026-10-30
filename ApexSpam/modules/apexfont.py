@@ -58,11 +58,13 @@ def register():
             text, btns = _menu()
             await e.reply(text, buttons=btns, parse_mode="html")
 
-        @c.on(events.CallbackQuery(pattern=rb"font:(\w+)"))
+        @c.on(events.CallbackQuery(pattern=r"font:(\w+)"))
         async def font_cb(e):
             if e.sender_id != OWNER_ID:
                 return await respond.ack(e, "Owner only", True)
-            name = e.pattern_match.group(1).decode()
+            name = e.pattern_match.group(1)
+            if isinstance(name, bytes):
+                name = name.decode()
             if not await fonts.set_font(name):
                 return await respond.ack(e, "Invalid font", True)
             await respond.ack(e, f"Font → {fonts.FONT_LABELS[name]}")

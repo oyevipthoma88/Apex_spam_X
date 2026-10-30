@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import time
-from random import choice
+from random import choice, uniform
 
 from telethon.errors import ChatWriteForbiddenError, FloodWaitError, SlowModeWaitError
 
@@ -111,6 +111,7 @@ async def execute_raid(event, pack, cmd_name):
         return await event.reply("❌ Empty pack.", parse_mode="html")
 
     ACTIVE[event.chat_id] = True
+    await asyncio.sleep(uniform(0.05, 0.4))  # stagger bots
     status = None
     try:
         status = await event.reply(

@@ -1,11 +1,11 @@
-"""Apex Spam X — global dedup (1 response per command across ALL bots)."""
+"""Apex Spam X — per-client dedup. EVERY bot responds independently."""
 import logging
 import time
 
 log = logging.getLogger("ApexSpam.dedup")
 
 _seen = {}
-_WINDOW = 5.0
+_WINDOW = 3.0
 _patched = False
 
 
@@ -27,16 +27,8 @@ def clear():
     _seen.clear()
 
 
-def _primary_client():
-    try:
-        from ApexSpam import CLIENTS
-        return CLIENTS[0] if CLIENTS else None
-    except Exception:
-        return None
-
-
 def patch():
-    """Global dedup + non-primary skips group messages (all DMs still work)."""
+    """Dedup per (bot, chat, msg, handler). All bots fire independently."""
     global _patched
     if _patched:
         return True
@@ -51,20 +43,18 @@ def patch():
 
                 async def wrapper(e):
                     try:
-                        # skip non-primary in groups (avoids 10x duplicate)
-                        if not getattr(e, "is_private", True):
-                            primary = _primary_client()
-                            if primary is not None and self is not primary:
-                                return
-                        # global dedup key (no client id)
                         cid = getattr(e, "chat_id", None)
                         mid = getattr(e, "id", None)
                         if cid is not None and mid is not None:
-                            if is_dup((cid, mid, hname)):
+                            key = (id(self), cid, mid, hname)
+                            if is_dup(key):
                                 return
                     except Exception:
                         pass
-                    return await fn(e)
+                    try:
+                        return await fn(e)
+                    except Exception as ex:
+                        log.exception(f"handler {hname} failed: {ex}")
 
                 wrapper.__name__ = hname
                 return orig_on(self, event, *args, **kwargs)(wrapper)
@@ -72,7 +62,7 @@ def patch():
 
         TelegramClient.on = patched_on
         _patched = True
-        log.info("✅ dedup (global, primary-in-groups)")
+        log.info("✅ dedup (per-client, all bots respond)")
         return True
     except Exception as e:
         log.exception(f"dedup patch failed: {e}")
