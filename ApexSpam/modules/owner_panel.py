@@ -21,35 +21,47 @@ PENDING = {}
 
 
 async def _apply_name(name):
-    # Telegram bot display names ACCEPT styled Unicode.
-    # Do NOT asciify — send the styled text as-is.
+    """Telegram allows styled Unicode — must NOT pass `bot=` when called as bot."""
     clean = name.strip()[:64]
     if not clean:
         return 0, "", False
     ok = 0
     for c in CLIENTS:
+        uname = "?"
         try:
             me = await c.get_me()
-            await c(SetBotInfoRequest(bot=me.id, lang_code="en", name=clean))
+            uname = me.username or "?"
+            # As a BOT: do NOT pass `bot=` (that's for user accounts)
+            await c(SetBotInfoRequest(lang_code="", name=clean))
+            # Force peer cache refresh
+            try:
+                from telethon.tl.functions.users import GetUsersRequest
+                from telethon.tl.types import InputUserSelf
+                await c(GetUsersRequest([InputUserSelf()]))
+            except Exception:
+                pass
             ok += 1
+            log.info(f"name set @{uname} -> {clean!r}")
         except Exception as ex:
-            log.warning(f"name fail: {ex}")
+            log.warning(f"name fail @{uname}: {type(ex).__name__}: {ex}")
     return ok, clean, False
 
 
 async def _apply_bio(bio):
-    # Bio also accepts styled Unicode — send as-is.
     clean = bio.strip()[:120]
     if not clean:
         return 0, "", False
     ok = 0
     for c in CLIENTS:
+        uname = "?"
         try:
             me = await c.get_me()
-            await c(SetBotInfoRequest(bot=me.id, lang_code="en", about=clean))
+            uname = me.username or "?"
+            await c(SetBotInfoRequest(lang_code="", about=clean))
             ok += 1
+            log.info(f"bio set @{uname} -> {clean[:30]!r}")
         except Exception as ex:
-            log.warning(f"bio fail: {ex}")
+            log.warning(f"bio fail @{uname}: {type(ex).__name__}: {ex}")
     return ok, clean, False
 
 

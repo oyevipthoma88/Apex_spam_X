@@ -7,7 +7,7 @@ from ApexSpam import (
     HNDLR, OWNER_ID, START_TIME,
     HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS,
 )
-from ApexSpam import botinfo, respond
+from ApexSpam import botinfo, respond, gcguard
 from ApexSpam.buttons import ib, grid
 from ApexSpam.ui import bread, quote, kv
 
@@ -101,7 +101,7 @@ def register():
             rtt = round((time.time() - t0) * 1000, 2)
             card = _card(rtt, u)
             if not e.is_private:
-                card += await _gc_warning(e.client, e.chat_id)
+                card += await gcguard.warn_if_not_admin(e.client, e.chat_id, e.is_private)
             await e.reply(card, buttons=_btns(), parse_mode="html")
 
         @c.on(events.CallbackQuery(data=b"ping:refresh"))
