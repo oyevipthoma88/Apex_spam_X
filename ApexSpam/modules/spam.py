@@ -6,6 +6,7 @@ from telethon.errors import FloodWaitError
 
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
 from ApexSpam import logger as xlog
+from ApexSpam.fonts import fx
 from ApexSpam.ui import header, quote, kv
 
 
@@ -56,7 +57,7 @@ def register():
                     if reply and reply.media and len(parts) < 3:
                         await event.client.send_file(event.chat_id, reply, caption=reply.text or "")
                     else:
-                        await event.client.send_message(event.chat_id, txt or ".")
+                        await event.client.send_message(event.chat_id, fx(txt or "."))
                     sent += 1
                 except FloodWaitError as fe:
                     await asyncio.sleep(fe.seconds)

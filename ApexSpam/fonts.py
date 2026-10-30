@@ -186,6 +186,14 @@ async def _p_msg_edit(self, text=None, **kw):
 
 
 def patch():
+    """DISABLED — font applies only via fx() at fire time."""
+    global _patched
+    _patched = True
+    log.info("font patcher disabled (fx() explicit only)")
+    return True
+
+
+def _old_patch_disabled():
     global _patched
     if _patched:
         return True
