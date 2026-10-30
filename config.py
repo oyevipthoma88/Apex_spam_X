@@ -21,10 +21,12 @@ OWNER_USERNAME = (os.getenv("OWNER_USERNAME") or "").strip()
 USER_SESSION = (os.getenv("USER_SESSION") or "").strip()
 MONGO_DB_URI = (os.getenv("MONGO_DB_URI") or "").strip()
 
-SUDO_USERS = [
+ENV_SUDO_IDS = {
     int(x) for x in os.getenv("SUDO_USERS", "").replace(",", " ").split()
     if x.strip().lstrip("-").isdigit()
-]
+}
+SUDO_USERS = list(ENV_SUDO_IDS)
+
 if OWNER_ID and OWNER_ID not in SUDO_USERS:
     SUDO_USERS.append(OWNER_ID)
 

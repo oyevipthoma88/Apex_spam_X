@@ -16,7 +16,8 @@ from telethon.tl.types import (
     ChatBannedRights,
 )
 
-from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
+from ApexSpam import HNDLR, OWNER_ID, CLIENTS
+from ApexSpam import roles
 from ApexSpam.ui import header, quote, kv, divider
 from ApexSpam.buttons import ib
 
@@ -33,8 +34,8 @@ NC_EMOJIS = [
 ]
 
 
-def _authed(uid):
-    return uid == OWNER_ID or uid in SUDO_USERS
+async def _authed(uid):
+    return await roles.can_moderate(uid)
 
 
 async def _admin_ok(client, chat, need="ban"):
@@ -65,7 +66,7 @@ def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=rf"^[\.!/]banall(?: |$)"))
         async def banall(e):
-            if not _authed(e.sender_id): return
+            if not await _authed(e.sender_id): return
             if not (e.is_group or e.is_channel):
                 return await e.reply("❌ Groups only.", parse_mode="html")
             ok, why = await _admin_ok(e.client, e.chat_id, need="ban")
@@ -80,7 +81,7 @@ def register():
 
         @c.on(events.NewMessage(pattern=rf"^[\.!/]unbanall(?: |$)"))
         async def unbanall(e):
-            if not _authed(e.sender_id): return
+            if not await _authed(e.sender_id): return
             if not (e.is_group or e.is_channel):
                 return await e.reply("❌ Groups only.", parse_mode="html")
             ok, why = await _admin_ok(e.client, e.chat_id, need="ban")
@@ -95,7 +96,7 @@ def register():
 
         @c.on(events.NewMessage(pattern=rf"^[\.!/]nc(?: |$)"))
         async def nc(e):
-            if not _authed(e.sender_id): return
+            if not await _authed(e.sender_id): return
             if not (e.is_group or e.is_channel):
                 return await e.reply("❌ Groups only.", parse_mode="html")
             ok, why = await _admin_ok(e.client, e.chat_id, need="title")
@@ -172,7 +173,7 @@ def register():
 
         @c.on(events.CallbackQuery(data=b"axmod_ok"))
         async def confirm(e):
-            if not _authed(e.sender_id):
+            if not await _authed(e.sender_id):
                 return await e.answer("Not allowed.", alert=True)
             job = PENDING.pop((e.chat_id, e.sender_id), None)
             if not job:

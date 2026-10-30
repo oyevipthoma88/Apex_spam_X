@@ -15,6 +15,9 @@ def register():
         # ── EVERY incoming message gets logged ──
         @c.on(events.NewMessage(incoming=True))
         async def log_all(e):
+            import os
+            if os.getenv('DEBUG_LOG') != '1':
+                return
             try:
                 t = (e.text or "")
                 log.info(

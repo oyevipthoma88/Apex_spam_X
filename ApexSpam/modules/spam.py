@@ -4,14 +4,15 @@ import asyncio
 from telethon import events
 from telethon.errors import FloodWaitError
 
-from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
+from ApexSpam import HNDLR, OWNER_ID, CLIENTS
+from ApexSpam import roles
 from ApexSpam import logger as xlog
 from ApexSpam.fonts import fx
 from ApexSpam.ui import header, quote, kv
 
 
-def _authed(uid):
-    return uid == OWNER_ID or uid in SUDO_USERS
+async def _authed(uid):
+    return await roles.can_use(uid)
 
 
 async def _chat_title(e):
@@ -27,7 +28,7 @@ def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=rf"^[\.!/]spam(?: |$)"))
         async def spam(event):
-            if not _authed(event.sender_id):
+            if not await _authed(event.sender_id):
                 return
             parts = event.text.split(maxsplit=2)
             if len(parts) < 2:

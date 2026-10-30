@@ -1,139 +1,92 @@
 from telethon import events
-from ApexSpam import HNDLR, OWNER_ID, CLIENTS, SUDO_USERS
-from ApexSpam.dedup import is_dup
+from ApexSpam import HNDLR, CLIENTS
 from ApexSpam.ui import header, quote, divider, footer
 from ApexSpam.buttons import ib
+from ApexSpam import roles
+
+PAGES = {
+    "help_raid": ("raid", "🔫", (
+        "raid sraid craid qraid abuse flirt hraid hrraid loveraid gm ga gn emoji"
+    ), "`CMD COUNT @user` / reply"),
+    "help_spam": ("spam", "💬", "spam", "`spam COUNT TEXT` / reply"),
+    "help_extra": ("extra", "🛠️", "ping alive id leave gcdiag", "basic"),
+    "help_admin": ("admin", "🛡️", "setpic delpic setcaption font axlogs axreboot reboot", "Owner"),
+    "help_mod": ("moderation", "⚔️", "banall unbanall nc", "Owner / Sudo"),
+    "help_sudo": ("sudo", "🔐", "addsudo delsudo sudolist addadmin deladmin listadmin", "Owner / Sudo"),
+    "help_custom": ("custom", "🧩", "setcmd delcmd mycmds", "everyone"),
+}
 
 
-def _owner(uid): return uid == OWNER_ID
-def _sudo(uid):  return uid in SUDO_USERS or _owner(uid)
-
-
-def _menu_text(uid):
-    role = "👑 Owner" if _owner(uid) else ("🛡️ Sudo" if uid in SUDO_USERS else "👤 User")
+def _page(key):
+    name, emoji, cmds, perm = PAGES[key]
+    lines = "\n".join(
+        f"<code>{HNDLR}{x}</code>" for x in cmds.split()
+    )
     return (
-        f"{header('apex help', '⚡')}\n\n"
-        + quote(f"◈ <b>Prefix</b>  :  <code>{HNDLR}</code>\n◈ <b>Role</b>    :  <b>{role}</b>")
-        + f"\n\n{divider()}\n<i>Select a category</i> 👇\n{footer()}"
+        f"{header(name, emoji)}\n\n"
+        + quote(lines, expandable=True)
+        + "\n\n"
+        + quote(f"<b>Perm</b> : <code>{perm}</code>")
     )
 
 
-def _menu_buttons(uid):
+async def _menu(uid):
+    r = await roles.role(uid)
+    role_label = {"owner": "👑 Owner", "sudo": "🛡️ Sudo",
+                  "admin": "👤 Admin", "user": "👤 User"}[r]
+    text = (
+        f"{header('apex help', '⚡')}\n\n"
+        + quote(f"<b>Prefix</b> : <code>{HNDLR}</code>\n<b>Role</b> : {role_label}")
+        + f"\n\n{divider()}\n<i>Select a category</i> 👇\n{footer()}"
+    )
     rows = []
-    if _sudo(uid):
-        rows.append([ib("🔫 Raid", b"help_raid", "primary"), ib("💬 Spam", b"help_spam", "primary")])
-    rows.append([ib("🛠️ Extra", b"help_extra", "primary")])
-    if _owner(uid):
-        rows.append([ib("🛡️ Admin", b"help_admin", "danger"), ib("⚔️ Moderation", b"help_mod", "danger")])
-        rows.append([ib("🔐 Sudo", b"help_sudo", "success"), ib("🎨 Font", b"help_font", "success")])
-    return rows
-
-
-PAGES = {
-    "help_raid": header("raid", "🔫") + "\n\n" + quote(
-        f"<code>{HNDLR}raid</code>    <code>{HNDLR}mraid</code>\n"
-        f"<code>{HNDLR}sraid</code>   <code>{HNDLR}craid</code>\n"
-        f"<code>{HNDLR}qraid</code>   <code>{HNDLR}loveraid</code>\n"
-        f"<code>{HNDLR}hrraid</code>  <code>{HNDLR}shayriraid</code>\n"
-        f"<code>{HNDLR}abuse</code>   <code>{HNDLR}flirt</code>\n"
-        f"<code>{HNDLR}hraid</code>   <code>{HNDLR}bspam</code>",
-        expandable=True,
-    ) + "\n\n" + quote(
-        "<b>Format</b> : <code>CMD COUNT TARGET</code>\n"
-        "<b>Target</b> : <code>@user</code> ya reply\n"
-        "<b>Perm</b>   : <code>Sudo / Owner</code>"
-    ),
-    "help_spam": header("spam", "💬") + "\n\n" + quote(
-        f"<code>{HNDLR}spam COUNT TEXT</code>\n"
-        f"<code>{HNDLR}spam COUNT</code> (reply)\n"
-        f"<code>{HNDLR}echo</code> (reply to user)\n"
-        f"<code>{HNDLR}emoji EMOJI COUNT</code>\n"
-        f"<code>{HNDLR}tagall MESSAGE</code>\n"
-        f"<code>{HNDLR}gcast TEXT</code>",
-        expandable=True,
-    ),
-    "help_extra": header("extra", "🛠️") + "\n\n" + quote(
-        f"<code>{HNDLR}ping</code>     — live latency\n"
-        f"<code>{HNDLR}alive</code>    — alive card\n"
-        f"<code>{HNDLR}id</code>       — user/chat id\n"
-        f"<code>{HNDLR}join</code>     — join chat\n"
-        f"<code>{HNDLR}leave</code>    — leave chat\n"
-        f"<code>{HNDLR}purge</code>    — delete (reply)",
-        expandable=True,
-    ),
-    "help_admin": header("admin", "🛡️") + "\n\n" + quote(
-        f"<code>{HNDLR}setpic</code>     — start photo\n"
-        f"<code>{HNDLR}delpic</code>     — remove photo\n"
-        f"<code>{HNDLR}setcaption</code> — custom caption\n"
-        f"<code>{HNDLR}font</code>       — font studio\n"
-        f"<code>{HNDLR}axlogs</code>     — heroku logs\n"
-        f"<code>{HNDLR}axreboot</code>   — heroku restart\n"
-        f"<code>{HNDLR}gcdiag</code>     — group check",
-        expandable=True,
-    ) + "\n\n" + quote("<b>Perm</b> : <code>Owner only</code>"),
-    "help_mod": header("moderation", "⚔️") + "\n\n" + quote(
-        f"<code>{HNDLR}banall</code>      — ban all members\n"
-        f"<code>{HNDLR}unbanall</code>    — unban all\n"
-        f"<code>{HNDLR}nc [limit]</code>  — nuke chat\n"
-        f"<code>{HNDLR}kick</code>        — kick (reply)\n"
-        f"<code>{HNDLR}ban</code>         — ban (reply)",
-        expandable=True,
-    ) + "\n\n" + quote(
-        "<b>Perm</b> : <code>Owner / Sudo</code>\n"
-        "<b>Need</b> : bot admin + ban/delete rights\n"
-        "<i>All destructive actions ask for confirmation.</i>"
-    ),
-    "help_sudo": header("sudo", "🔐") + "\n\n" + quote(
-        f"<code>{HNDLR}addsudo ID</code>\n"
-        f"<code>{HNDLR}delsudo ID</code>\n"
-        f"<code>{HNDLR}sudolist</code>",
-        expandable=True,
-    ) + "\n\n" + quote("<i>Mongo + env union — global.</i>"),
-    "help_font": header("font", "🎨") + "\n\n" + quote(
-        f"<code>{HNDLR}font</code>        — studio\n"
-        f"<code>{HNDLR}font bold</code>   — by name\n"
-        f"<code>{HNDLR}font 1</code>      — by index\n\n"
-        "Applies to raids, spam and every bot reply.",
-        expandable=True,
-    ) + "\n\n" + quote("<b>Perm</b> : <code>Owner only</code>"),
-}
-
-_GATE_OWNER = {"help_admin", "help_sudo", "help_font"}
-_GATE_SUDO = {"help_raid", "help_spam", "help_mod"}
+    if r in ("owner", "sudo", "admin"):
+        rows.append([ib("🔫 Raid", b"help_raid", "primary"),
+                     ib("💬 Spam", b"help_spam", "primary")])
+    rows.append([ib("🛠️ Extra", b"help_extra", "primary"),
+                 ib("🧩 Custom", b"help_custom", "success")])
+    if r in ("owner", "sudo"):
+        rows.append([ib("⚔️ Moderation", b"help_mod", "danger")])
+    if r == "owner":
+        rows.append([ib("🛡️ Admin", b"help_admin", "danger"),
+                     ib("🔐 Sudo", b"help_sudo", "success")])
+    return text, rows
 
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[\.!/]help(?: |$)"))
+        @c.on(events.NewMessage(pattern=r"^[\.!/]help(?: |$)"))
         async def help_cmd(e):
-            if is_dup(e.chat_id, e.id):
-                return
-            await e.reply(_menu_text(e.sender_id), buttons=_menu_buttons(e.sender_id), parse_mode="html")
+            text, rows = await _menu(e.sender_id)
+            await e.reply(text, buttons=rows, parse_mode="html")
 
-        @c.on(events.NewMessage(pattern=rf"^[\.!/]help (\w+)(?: |$)"))
+        @c.on(events.NewMessage(pattern=r"^[\.!/]help (\w+)(?: |$)"))
         async def help_text(e):
             key = f"help_{e.pattern_match.group(1).lower()}"
-            uid = e.sender_id
-            if key in _GATE_OWNER and not _owner(uid): return
-            if key in _GATE_SUDO and not _sudo(uid): return
-            if key in PAGES:
-                await e.reply(PAGES[key], parse_mode="html")
+            r = await roles.role(e.sender_id)
+            allowed = {
+                "help_raid": r in ("owner", "sudo", "admin"),
+                "help_spam": r in ("owner", "sudo", "admin"),
+                "help_extra": True,
+                "help_custom": True,
+                "help_mod": r in ("owner", "sudo"),
+                "help_admin": r == "owner",
+                "help_sudo": r in ("owner", "sudo"),
+            }
+            if key in PAGES and allowed.get(key):
+                await e.reply(_page(key), parse_mode="html")
 
-        def _mk(txt):
-            async def cb(e):
-                await e.edit(txt, buttons=[[ib("« Back", b"help_back", "primary")]], parse_mode="html")
-            return cb
+        def _cb(key):
+            async def h(e):
+                await e.edit(_page(key),
+                             buttons=[[ib("« Back", b"help_back", "primary")]],
+                             parse_mode="html")
+            return h
 
-        for key, txt in PAGES.items():
-            c.on(events.CallbackQuery(data=key.encode()))(_mk(txt))
+        for key in PAGES:
+            c.on(events.CallbackQuery(data=key.encode()))(_cb(key))
 
         @c.on(events.CallbackQuery(data=b"help_back"))
         async def back(e):
-            await e.edit(_menu_text(e.sender_id), buttons=_menu_buttons(e.sender_id), parse_mode="html")
-
-        @c.on(events.CallbackQuery(data=b"help_font"))
-        async def help_font(e):
-            if not _owner(e.sender_id):
-                return await e.answer("Owner only.", alert=True)
-            from ApexSpam.modules.apexfont import _open_menu
-            await _open_menu(e)
+            text, rows = await _menu(e.sender_id)
+            await e.edit(text, buttons=rows, parse_mode="html")

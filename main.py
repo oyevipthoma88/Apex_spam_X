@@ -5,6 +5,7 @@ from pathlib import Path
 
 import config
 from ApexSpam import fonts, buttons, state, logger as xlog, dedup
+from ApexSpam.modules import customcmds
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,6 +22,7 @@ async def sync_loop():
                 if uid not in config.SUDO_USERS:
                     config.SUDO_USERS.append(uid)
             await fonts.sync_from_db()
+            await customcmds.refresh(force=True)
         except Exception as e:
             log.warning(f"sync_loop: {e}")
         await asyncio.sleep(30)

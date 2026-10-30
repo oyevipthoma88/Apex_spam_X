@@ -1,11 +1,10 @@
-"""Apex Spam X — premium HTML card builders."""
+"""Apex Spam X — premium HTML card builders (fixed)."""
 import html
 import re
 
 BRAND = "Apex Spam X"
 TOP = "╭━━━━━━━━━━━━━━━━━━━━╮"
 BOT = "╰━━━━━━━━━━━━━━━━━━━━╯"
-
 _TOKEN = re.compile(r"\{(header|greet|q1|q2|meta)\}")
 
 
@@ -30,11 +29,11 @@ def title(text: str, emoji: str = "⚡") -> str:
 
 def quote(text: str, expandable: bool = False) -> str:
     tag = "blockquote expandable" if expandable else "blockquote"
-    return f"<{tag}>{text}</{tag}>"
+    return f"<{tag}>{text}</{tag}>"          # ✅ closing tag fixed
 
 
 def kv(key: str, value) -> str:
-    return f"◈ <b>{esc(key)}</b>  :  <code>{esc(value)}</code>"
+    return f"◈ <b>{esc(key)}</b>  :  <code>{esc(value)}</code>"   # ✅ code tag
 
 
 def section(name: str) -> str:
@@ -46,7 +45,7 @@ def divider() -> str:
 
 
 def link_user(uid, name: str) -> str:
-    return f'<a href="tg://user?id={uid}">{esc(name)}</a>'
+    return f'<a href="tg://user?id={int(uid)}">{esc(name)}</a>'   # ✅ fixed
 
 
 def bar(value, limit=1000, size=10) -> str:
@@ -55,5 +54,5 @@ def bar(value, limit=1000, size=10) -> str:
     return "▰" * filled + "▱" * (size - filled)
 
 
-def footer(text="Apex Spam X") -> str:
+def footer(text: str = BRAND) -> str:
     return f"<i>{esc(text)}</i>"

@@ -4,7 +4,8 @@ from random import choice
 
 from telethon.errors import FloodWaitError
 
-from ApexSpam import HNDLR, OWNER_ID, SUDO_USERS
+from ApexSpam import HNDLR, OWNER_ID
+from ApexSpam import roles
 from ApexSpam import fonts
 from ApexSpam import logger as xlog
 from models.raid import get_raid_messages
@@ -15,12 +16,7 @@ DELAY = 0.15
 
 
 async def _authed(uid):
-    if uid == OWNER_ID or uid in SUDO_USERS:
-        return True
-    try:
-        return await is_sudo(uid)
-    except Exception:
-        return False
+    return await roles.can_use(uid)
 
 
 async def _pack(category, fallback):
@@ -79,10 +75,8 @@ async def execute_raid(event, fallback, cmd_name, category=None):
     else:
         return await event.reply(usage, parse_mode="html")
 
-    if uid == OWNER_ID:
-        return await event.reply("❌ Can't raid the owner.", parse_mode="html")
-    if await is_sudo(uid):
-        return await event.reply("❌ Can't raid a sudo user.", parse_mode="html")
+    if await roles.role(uid) in (roles.OWNER, roles.SUDO, roles.ADMIN):
+        return await event.reply("❌ Protected user.", parse_mode="html")
 
     pack = await _pack(category or cmd_name, fallback)
     if not pack:
