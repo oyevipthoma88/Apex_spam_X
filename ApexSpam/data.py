@@ -986,3 +986,18 @@ SHAYRI_RAID.extend([
     "ishq ki baatein", "chhat pe milte", "tere naam ki shayri",
     "raat ke saaye me chehra",
 ])
+
+# Ensure craid/qraid have content
+if not CRAID:
+    CRAID.extend([
+        "custom raid alpha", "custom raid beta", "custom raid gamma",
+        "custom raid delta", "custom raid epsilon",
+    ])
+if not QRAID:
+    QRAID.extend([
+        "Zindagi ek safar hai suhana",
+        "Raat baaki hai mere dost",
+        "Kuch toh log kahenge",
+        "Dil chahta hai",
+        "Jo jeeta wohi sikandar",
+    ])
