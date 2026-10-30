@@ -1,43 +1,29 @@
-"""Apex Spam X — Telegram rich button styles with fallback."""
+"""Apex Spam X — Telegram rich button styles (string, not object!)."""
 import logging
 from telethon import Button
-from telethon.tl import types
 
 log = logging.getLogger("ApexSpam.buttons")
-
-_STYLE = getattr(types, "KeyboardButtonStyle", None)
-HAS_STYLE = _STYLE is not None
-log.info(f"Rich buttons: {HAS_STYLE}")
+HAS_STYLE = True
+_VALID = ("primary", "danger", "success")
 
 
-def _st(kind):
-    if not _STYLE:
-        return None
-    try:
-        if kind == "danger":
-            return _STYLE(bg_danger=True)
-        if kind == "success":
-            return _STYLE(bg_success=True)
-        return _STYLE(bg_primary=True)
-    except Exception:
-        return None
+def _k(kind):
+    return kind if kind in _VALID else "primary"
 
 
 def ib(text, data, kind="primary"):
-    st = _st(kind)
-    if st:
-        try:
-            return Button.inline(text, data, style=st)
-        except TypeError:
-            pass
-    return Button.inline(text, data)
+    """Inline callback button with colour: primary|danger|success."""
+    try:
+        return Button.inline(text, data, style=_k(kind))
+    except TypeError:
+        global HAS_STYLE
+        HAS_STYLE = False
+        return Button.inline(text, data)
 
 
 def ub(text, url, kind="primary"):
-    st = _st(kind)
-    if st:
-        try:
-            return Button.url(text, url, style=st)
-        except TypeError:
-            pass
-    return Button.url(text, url)
+    """URL button with colour."""
+    try:
+        return Button.url(text, url, style=_k(kind))
+    except TypeError:
+        return Button.url(text, url)

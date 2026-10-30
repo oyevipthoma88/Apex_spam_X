@@ -1,9 +1,10 @@
-"""Apex Spam X — compact ping + Heroku reboot."""
+"""Apex Spam X — ping (dedup + client tag) + Heroku reboot."""
 import time
 
 from telethon import events
 
 from ApexSpam import HNDLR, OWNER_ID, START_TIME, HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS
+from ApexSpam.dedup import is_dup
 from ApexSpam.ui import quote, kv, footer, title
 
 try:
@@ -31,7 +32,7 @@ def _uptime():
     return f"{d}d {h}h {m}m" if d else f"{h}h {m}m"
 
 
-def _card(rtt, db):
+def _card(rtt, db, username):
     sig = "Excellent" if rtt < 250 else ("Good" if rtt < 600 else "Slow")
     return (
         f"{title('p o n g', '⚡')}\n"
@@ -39,7 +40,8 @@ def _card(rtt, db):
             f"{kv('Latency', f'{rtt} ms')}\n"
             f"◈ <b>Signal</b>  :  <b>{sig}</b>\n"
             f"{kv('Uptime', _uptime())}\n"
-            f"{kv('MongoDB', db)}"
+            f"{kv('MongoDB', db)}\n"
+            f"{kv('Bot', '@' + username)}"
         )
         + f"\n{footer()}"
     )
@@ -49,11 +51,14 @@ def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}ping(?: |$)"))
         async def ping(e):
+            if is_dup(e.chat_id, e.id):
+                return
             t0 = time.time()
             msg = await e.reply("⚡", parse_mode="html")
+            me = await e.client.get_me()
             rtt = round((time.time() - t0) * 1000, 2)
             db = await _mongo_ms()
-            await msg.edit(_card(rtt, db), parse_mode="html")
+            await msg.edit(_card(rtt, db, me.username or "bot"), parse_mode="html")
 
         @c.on(events.NewMessage(pattern=rf"\{HNDLR}reboot(?: |$)"))
         async def reboot(e):

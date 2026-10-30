@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 import config
-from ApexSpam import fonts, buttons, state
+from ApexSpam import fonts, buttons, state, logger as xlog
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,8 +68,16 @@ async def main():
             log.exception(f"❌ login failed: {e}")
 
     if started == 0:
-        log.error("❌ NO CLIENT STARTED — check API_ID / API_HASH / BOT_TOKEN1")
+        log.error("❌ NO CLIENT STARTED")
         return
+
+    if config.CLIENTS:
+        xlog.set_client(config.CLIENTS[0])
+        try:
+            await xlog.log_bot("STARTUP", (await config.CLIENTS[0].get_me()).username or "bot",
+                               f"clients={started}")
+        except Exception as e:
+            log.warning(f"startup log: {e}")
 
     asyncio.create_task(sync_loop())
     log.info(f"🚀 running with {started} client(s) | rich buttons: {buttons.HAS_STYLE}")

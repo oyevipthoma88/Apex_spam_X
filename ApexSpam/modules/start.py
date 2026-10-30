@@ -6,6 +6,7 @@ from io import BytesIO
 from telethon import events
 
 from ApexSpam import HNDLR, START_TIME, CLIENTS
+from ApexSpam.dedup import is_dup
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
 from ApexSpam.buttons import ib, ub
 from models.bot_settings import get_value
@@ -86,6 +87,8 @@ def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=r"^/start(?:@\w+)?(?:\s|$)"))
         async def start(e):
+            if is_dup(e.chat_id, e.id):
+                return
             try:
                 log.info(f"START-HIT uid={e.sender_id} chat={e.chat_id} priv={e.is_private}")
             except Exception:

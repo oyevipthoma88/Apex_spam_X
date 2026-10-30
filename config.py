@@ -108,3 +108,5 @@ def create_clients():
     BOT_TOKENS.clear()
     BOT_TOKENS.extend(tokens)
     return clients
+
+LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID", "0") or 0)
