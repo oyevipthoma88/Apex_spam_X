@@ -93,5 +93,4 @@ def register():
             mention = f"[{name}](tg://user?id={e.sender_id})"
             for _ in range(n):
                 body = f"{mention} {fonts.fx(choice(pack))}"
-                await _send(e.client, e.chat_id, body)
-                await asyncio.sleep(DELAY)
+                await _send(e.client, e.chat_id, body, is_private=e.is_private)

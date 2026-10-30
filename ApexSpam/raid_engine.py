@@ -12,6 +12,7 @@ from telethon.errors import (
 
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS
 from ApexSpam import fonts, roles
+from ApexSpam import sender as _sender
 from ApexSpam import logger as xlog
 from ApexSpam import trace
 from ApexSpam.ui import bread, quote, prog, pill, footer
@@ -41,25 +42,8 @@ def _cooldown(client):
     return max(0.0, COOLDOWN.get(id(client), 0) - time.time())
 
 
-async def _send(client, chat_id, text):
-    if _cooldown(client) > 0:
-        return False
-    try:
-        await client.send_message(chat_id, text)
-        return True
-    except FloodWaitError as fe:
-        COOLDOWN[id(client)] = time.time() + fe.seconds + 1
-        log.warning(f"flood {fe.seconds}s client={id(client)}")
-        return False
-    except ChatWriteForbiddenError as e:
-        log.warning(f"write forbidden client={id(client)} chat={chat_id}: {e}")
-        return False
-    except SlowModeWaitError as e:
-        log.warning(f"slowmode {e.seconds}s client={id(client)}")
-        return False
-    except Exception as e:
-        log.warning(f"send fail client={id(client)}: {type(e).__name__}: {e}")
-        return False
+async def _send(client, chat_id, text, is_private=False):
+    return await _sender.send(client, chat_id, text, is_private=is_private)
 
 
 async def _title(event):
@@ -132,7 +116,7 @@ async def execute_raid(event, pack, cmd_name):
 
         key = _key(event.client, event.chat_id)
         ACTIVE[key] = True
-        await asyncio.sleep(uniform(0.05, 0.4))
+        await asyncio.sleep(uniform(0.02, 0.1))
 
         primary = bool(CLIENTS) and event.client is CLIENTS[0]
         status = None
@@ -148,13 +132,13 @@ async def execute_raid(event, pack, cmd_name):
 
         sent = 0
         mention = f"[{name}](tg://user?id={uid})"
-        step = max(1, count // 4)
+        step = max(1, count // 2)
         try:
             for i in range(count):
                 if key not in ACTIVE:
                     break
                 body = f"{mention} {fonts.fx(choice(pack))}"
-                if await _send(event.client, event.chat_id, body):
+                if await _send(event.client, event.chat_id, body, is_private=event.is_private):
                     sent += 1
                 if status and (i + 1) % step == 0:
                     try:
@@ -165,7 +149,6 @@ async def execute_raid(event, pack, cmd_name):
                         )
                     except Exception:
                         pass
-                await asyncio.sleep(DELAY)
         finally:
             ACTIVE.pop(key, None)
 
