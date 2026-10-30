@@ -1,8 +1,11 @@
-"""Apex Spam X — ping + Heroku reboot."""
+"""Apex Spam X — ping + reboot (fast, cached)."""
 import time
 from telethon import events
+
 from ApexSpam import HNDLR, OWNER_ID, START_TIME, HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS
-from ApexSpam.ui import title, quote, kv, footer
+from ApexSpam import botinfo, respond
+from ApexSpam.ui import bread, quote, kv, footer, pill
+from ApexSpam.buttons import ib
 
 
 def _uptime():
@@ -15,16 +18,17 @@ def _uptime():
 
 def _card(rtt, username):
     sig = "Excellent" if rtt < 250 else ("Good" if rtt < 600 else "Slow")
-    return (
-        f"{title('p o n g', '⚡')}\n\n"
-        + quote(
-            f"{kv('Latency', f'{rtt} ms')}\n"
-            f"◈ <b>Signal</b>  :  <b>{sig}</b>\n"
-            f"{kv('Uptime', _uptime())}\n"
-            f"{kv('Bot', '@' + username)}"
-        )
-        + f"\n{footer()}"
+    body = (
+        f"{pill(sig, 'ok' if rtt < 600 else 'warn')}\n"
+        f"{kv('Latency', f'{rtt} ms')}\n"
+        f"{kv('Uptime', _uptime())}\n"
+        f"{kv('Bot', '@' + username)}"
     )
+    return f"{bread('system', 'ping')}\n\n{quote(body, expandable=True)}\n{footer()}"
+
+
+def _btns():
+    return [[ib("🔄 Refresh", b"ping:refresh", "primary")]]
 
 
 def register():
@@ -32,9 +36,17 @@ def register():
         @c.on(events.NewMessage(pattern=r"^[\.!/]ping(?: |$)"))
         async def ping(e):
             t0 = time.time()
-            me = await e.client.get_me()
+            u = await botinfo.username(e.client)
             rtt = round((time.time() - t0) * 1000, 2)
-            await e.reply(_card(rtt, me.username or "bot"), parse_mode="html")
+            await e.reply(_card(rtt, u), buttons=_btns(), parse_mode="html")
+
+        @c.on(events.CallbackQuery(data=b"ping:refresh"))
+        async def refresh(e):
+            await respond.ack(e, "Refreshing…")
+            t0 = time.time()
+            u = await botinfo.username(e.client)
+            rtt = round((time.time() - t0) * 1000, 2)
+            await respond.edit(e, _card(rtt, u), buttons=_btns())
 
         @c.on(events.NewMessage(pattern=r"^[\.!/]reboot(?: |$)"))
         async def reboot(e):

@@ -8,7 +8,7 @@ from ApexSpam import HNDLR, OWNER_ID, CLIENTS
 from ApexSpam import roles
 from ApexSpam import logger as xlog
 from ApexSpam.fonts import fx
-from ApexSpam.ui import header, quote, kv
+from ApexSpam.ui import bread, quote, kv, prog, pill, footer
 
 
 async def _authed(uid):
@@ -67,8 +67,14 @@ def register():
                 await asyncio.sleep(0.15)
 
             await event.reply(
-                f"{header('spam done', '✅')}\n\n"
-                + quote(f"{kv('Sent', sent)}\n{kv('Failed', failed)}", expandable=True),
+                f"{bread('spam', 'done')}\n\n"
+                + quote(
+                    f"{pill('Completed', 'ok')}\n"
+                    f"{prog(sent, sent + failed)}\n"
+                    f"{kv('Sent', sent)}\n{kv('Failed', failed)}",
+                    expandable=True,
+                )
+                + f"\n{footer()}",
                 parse_mode="html",
             )
 

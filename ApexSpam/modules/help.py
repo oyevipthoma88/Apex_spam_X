@@ -1,15 +1,16 @@
 from telethon import events
+
 from ApexSpam import HNDLR, CLIENTS
-from ApexSpam.ui import header, quote, divider, footer
-from ApexSpam.buttons import ib
-from ApexSpam import roles
+from ApexSpam import roles, respond
+from ApexSpam.ui import bread, quote, divider, footer, pill, kv, join_rows
+from ApexSpam.buttons import ib, copy_btn, nav, grid
 
 PAGES = {
     "help_raid": ("raid", "🔫",
         "raid sraid craid qraid abuse flirt hraid bspam hrraid loveraid shayriraid gm ga gn emoji",
-        "`CMD COUNT @user` / reply"),
-    "help_spam": ("spam", "💬", "spam", "`spam COUNT TEXT` / reply"),
-    "help_extra": ("extra", "🛠️", "ping alive id leave gcdiag rraid drraid stop", "basic"),
+        "Sudo / Owner"),
+    "help_spam": ("spam", "💬", "spam", "Sudo / Owner"),
+    "help_extra": ("extra", "🛠️", "ping alive id leave gcdiag rraid drraid stop", "everyone"),
     "help_admin": ("admin", "🛡️", "setpic delpic setcaption font axlogs axreboot reboot", "Owner"),
     "help_mod": ("moderation", "⚔️", "banall unbanall nc", "Owner / Sudo"),
     "help_sudo": ("sudo", "🔐", "addsudo delsudo sudolist addadmin deladmin listadmin", "Owner / Sudo"),
@@ -19,35 +20,44 @@ PAGES = {
 
 def _page(key):
     name, emoji, cmds, perm = PAGES[key]
-    lines = "\n".join(f"<code>{HNDLR}{x}</code>" for x in cmds.split())
-    return (
-        f"{header(name, emoji)}\n\n"
-        + quote(lines, expandable=True)
+    cmd_list = cmds.split()
+    body = "\n".join(f"<code>{HNDLR}{c}</code>" for c in cmd_list)
+    text = (
+        f"{bread('help', name)}\n\n"
+        + quote(body, expandable=True)
         + "\n\n"
-        + quote(f"<b>Perm</b> : <code>{perm}</code>")
+        + quote(f"{kv('Perm', perm)}")
     )
+    rows = []
+    cb = copy_btn("📋 Copy commands", "\n".join(f"{HNDLR}{c}" for c in cmd_list))
+    if cb:
+        rows.append([cb])
+    rows.append(nav(b"help:back"))
+    return text, join_rows(rows)
 
 
 async def _menu(uid):
     r = await roles.role(uid)
-    role_label = {"owner": "👑 Owner", "sudo": "🛡️ Sudo",
-                  "admin": "👤 Admin", "user": "👤 User"}[r]
+    label = {"owner": "Owner", "sudo": "Sudo", "admin": "Admin", "user": "User"}[r]
     text = (
-        f"{header('apex help', '⚡')}\n\n"
-        + quote(f"<b>Prefix</b> : <code>{HNDLR}</code>\n<b>Role</b> : {role_label}")
-        + f"\n\n{divider()}\n<i>Select a category</i> 👇\n{footer()}"
+        f"{bread('help', 'home')}\n\n"
+        + quote(f"{pill(label, 'ok' if r != 'user' else 'info')}\n"
+                f"{kv('Prefix', HNDLR + '  !  /')}", expandable=True)
+        + f"\n{divider()}\n<i>Pick a category</i> 👇\n{footer()}"
     )
-    rows = []
+    buttons = []
     if r in ("owner", "sudo", "admin"):
-        rows.append([ib("🔫 Raid", b"help_raid", "primary"),
-                     ib("💬 Spam", b"help_spam", "primary")])
-    rows.append([ib("🛠️ Extra", b"help_extra", "primary"),
-                 ib("🧩 Custom", b"help_custom", "success")])
+        buttons += [ib("🔫 Raid", b"help_raid", "primary"),
+                    ib("💬 Spam", b"help_spam", "primary")]
+    buttons += [ib("🛠️ Extra", b"help_extra", "primary"),
+                ib("🧩 Custom", b"help_custom", "success")]
     if r in ("owner", "sudo"):
-        rows.append([ib("⚔️ Moderation", b"help_mod", "danger")])
+        buttons.append(ib("⚔️ Moderation", b"help_mod", "danger"))
     if r == "owner":
-        rows.append([ib("🛡️ Admin", b"help_admin", "danger"),
-                     ib("🔐 Sudo", b"help_sudo", "success")])
+        buttons += [ib("🛡️ Admin", b"help_admin", "danger"),
+                    ib("🔐 Sudo", b"help_sudo", "success")]
+    rows = grid(buttons, 2)
+    rows.append([ib("✖ Close", b"close", "danger")])
     return text, rows
 
 
@@ -62,7 +72,7 @@ def register():
         async def help_text(e):
             key = f"help_{e.pattern_match.group(1).lower()}"
             r = await roles.role(e.sender_id)
-            allowed = {
+            allow = {
                 "help_raid": r in ("owner", "sudo", "admin"),
                 "help_spam": r in ("owner", "sudo", "admin"),
                 "help_extra": True,
@@ -71,20 +81,29 @@ def register():
                 "help_admin": r == "owner",
                 "help_sudo": r in ("owner", "sudo"),
             }
-            if key in PAGES and allowed.get(key):
-                await e.reply(_page(key), parse_mode="html")
-
-        def _cb(key):
-            async def h(e):
-                await e.edit(_page(key),
-                             buttons=[[ib("« Back", b"help_back", "primary")]],
-                             parse_mode="html")
-            return h
+            if key in PAGES and allow.get(key):
+                text, rows = _page(key)
+                await e.reply(text, buttons=rows, parse_mode="html")
 
         for key in PAGES:
-            c.on(events.CallbackQuery(data=key.encode()))(_cb(key))
+            def _mk(k):
+                async def cb(e):
+                    await respond.ack(e)
+                    text, rows = _page(k)
+                    await respond.edit(e, text, rows)
+                return cb
+            c.on(events.CallbackQuery(data=key.encode()))(_mk(key))
 
-        @c.on(events.CallbackQuery(data=b"help_back"))
+        @c.on(events.CallbackQuery(data=b"help:back"))
         async def back(e):
+            await respond.ack(e)
             text, rows = await _menu(e.sender_id)
-            await e.edit(text, buttons=rows, parse_mode="html")
+            await respond.edit(e, text, rows)
+
+        @c.on(events.CallbackQuery(data=b"close"))
+        async def close(e):
+            await respond.ack(e)
+            try:
+                await e.delete()
+            except Exception:
+                pass

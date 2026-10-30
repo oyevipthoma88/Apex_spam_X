@@ -17,8 +17,8 @@ from telethon.tl.types import (
 )
 
 from ApexSpam import HNDLR, OWNER_ID, CLIENTS
-from ApexSpam import roles
-from ApexSpam.ui import header, quote, kv, divider
+from ApexSpam import roles, respond
+from ApexSpam.ui import bread, quote, kv, prog, pill, footer
 from ApexSpam.buttons import ib
 
 log = logging.getLogger("ApexSpam.apexmod")
@@ -55,9 +55,9 @@ async def _admin_ok(client, chat, need="ban"):
 
 def _confirm(title, emoji, lines, ok_label, ok_data, no_data):
     return (
-        f"{header(title, emoji)}\n\n"
+        f"{bread('mod', title)}\n\n"
         + quote(lines, expandable=True)
-        + f"\n\n{divider()}\n<i>This cannot be undone.</i>",
+        + f"\n\n{quote('⚠️ This cannot be undone.')}",
         [[ib(ok_label, ok_data, "danger"), ib("✖ Cancel", no_data, "success")]],
     )
 
@@ -253,7 +253,12 @@ async def _do_unbanall(e):
             await _progress(msg, "unbanall", freed + failed, seen, "♻️")
         await asyncio.sleep(BAN_DELAY)
     await msg.edit(
-        f"{header('unbanall done', '✅')}\n\n"
-        + quote(f"{kv('Unbanned', freed)}\n{kv('Failed', failed)}", expandable=True),
+        f"{bread('mod', 'unbanall done')}\n\n"
+        + quote(
+            f"{pill('Done', 'ok')}\n"
+            f"{kv('Unbanned', freed)}\n{kv('Failed', failed)}",
+            expandable=True,
+        )
+        + f"\n{footer()}",
         parse_mode="html",
     )

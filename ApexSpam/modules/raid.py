@@ -5,7 +5,9 @@ from telethon import events
 
 from ApexSpam import HNDLR, CLIENTS
 from ApexSpam import data as D
-from ApexSpam.raid_engine import execute_raid
+from ApexSpam.raid_engine import execute_raid, stop as stop_raid
+from ApexSpam import roles, respond
+from ApexSpam.buttons import ib
 
 log = logging.getLogger("ApexSpam.raid.mod")
 
@@ -36,6 +38,13 @@ def _make(pack, name):
 
 def register():
     for c in CLIENTS:
+        @c.on(events.CallbackQuery(data=b'raid:stop'))
+        async def stop_cb(e):
+            if not await roles.can_use(e.sender_id):
+                return await respond.ack(e, 'Not allowed', True)
+            stop_raid(e.chat_id)
+            await respond.ack(e, 'Stopping…')
+
         for name, attr in PACKS:
             pack = getattr(D, attr, None) or []
             if not pack:
