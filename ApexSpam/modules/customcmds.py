@@ -34,9 +34,11 @@ async def refresh(force=False):
     global CACHE, LAST
     if not force and time.time() - LAST < 20:
         return
+    old = len(CACHE)
     CACHE = await load_all()
     LAST = time.time()
-    log.info(f"custom cmds cached: {len(CACHE)}")
+    if len(CACHE) != old:
+        log.info(f"custom cmds cached: {len(CACHE)}")
 
 
 def get(uid, cmd):

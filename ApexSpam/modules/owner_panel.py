@@ -22,6 +22,7 @@ PENDING = {}
 async def _apply_name(name):
     from ApexSpam.fonts import asciify
     clean = asciify(name)[:64]
+    stripped = clean != name
     ok = 0
     for c in CLIENTS:
         try:
@@ -30,7 +31,7 @@ async def _apply_name(name):
             ok += 1
         except Exception as ex:
             log.warning(f"name fail: {ex}")
-    return ok
+    return ok, clean, stripped
 
 
 async def _apply_bio(bio):
@@ -253,9 +254,15 @@ def register():
             PENDING.pop(e.chat_id, None)
 
             if action == "setname" and e.text:
-                ok = await _apply_name(e.text[:64])
-                await e.reply(f"{bread('owner', 'name')}\n\n"
-                              + quote(f"{pill('Updated', 'ok')}\n{kv('Count', f'{ok}/{len(CLIENTS)}')}"),
+                ok, clean, stripped = await _apply_name(e.text[:64])
+                body = (
+                    f"{pill('Updated', 'ok') if ok else pill('Failed', 'bad')}\n"
+                    f"{kv('Applied', clean)}\n"
+                    f"{kv('Count', f'{ok}/{len(CLIENTS)}')}"
+                )
+                if stripped:
+                    body += "\n\n<i>⚠️ Styled characters stripped — Telegram bot names must be plain ASCII.</i>"
+                await e.reply(f"{bread('owner', 'name')}\n\n" + quote(body),
                               parse_mode="html")
             elif action == "setbio" and e.text:
                 ok = await _apply_bio(e.text[:140])
