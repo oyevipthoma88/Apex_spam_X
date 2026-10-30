@@ -1,4 +1,4 @@
-"""Apex Spam X — premium HTML cards (Bot API 7.3+ blockquote, spoiler)."""
+"""Apex Spam X — premium HTML cards (fixed tags)."""
 import html
 import re
 
@@ -19,12 +19,12 @@ def safe_format(tpl, **vals):
 
 
 def header(title, emoji="⚡"):
-    spaced = " ".join(title.upper())
+    spaced = " ".join(str(title).upper())
     return f"<b>{TOP}</b>\n   {emoji} <b>{esc(spaced)}</b> {emoji}\n<b>{BOT}</b>"
 
 
 def title(text, emoji="⚡"):
-    return f"{emoji} <b>{esc(text.upper())}</b>"
+    return f"{emoji} <b>{esc(str(text).upper())}</b>"
 
 
 def quote(text, expandable=False):
@@ -58,8 +58,6 @@ def footer(text=BRAND):
     return f"<i>{esc(text)}</i>"
 
 
-# ── v2 primitives ──
-
 def bread(*parts, emoji="⚡"):
     trail = " › ".join(esc(str(p).upper()) for p in parts)
     return f"{emoji} <b>{esc(BRAND.upper())}</b>  ·  {trail}"
@@ -75,10 +73,8 @@ def prog(cur, total, width=10):
     cur = min(max(0, int(cur)), total)
     filled = int(round(cur / total * width))
     pct = int(round(cur / total * 100))
-    return (
-        f"<code>{'▰' * filled}{'▱' * (width - filled)}</code>  "
-        f"<b>{pct}%</b>  <code>{cur}/{total}</code>"
-    )
+    bar_ = "▰" * filled + "▱" * (width - filled)
+    return f"<code>{bar_}</code>  <b>{pct}%</b>  <code>{cur}/{total}</code>"
 
 
 def spoil(text):
@@ -93,15 +89,17 @@ def table(headers, rows):
     for r in rows:
         for i in range(min(cols, len(r))):
             widths[i] = max(widths[i], len(r[i]))
+
     def line(r):
         return "  ".join(r[i].ljust(widths[i]) for i in range(cols))
-    text = [line(headers), "─" * (sum(widths) + 2 * (cols - 1))]
-    text += [line(r) for r in rows]
-    return "<pre>" + esc("\n".join(text)) + "</pre>"
+
+    out = [line(headers), "─" * (sum(widths) + 2 * (cols - 1))]
+    out += [line(r) for r in rows]
+    return "<pre>" + esc("\n".join(out)) + "</pre>"
 
 
-def card(title, body, emoji="⚡", footer_text=None):
-    out = f"{header(title, emoji)}\n\n{quote(body, expandable=True)}"
+def card(title_, body, emoji="⚡", footer_text=None):
+    out = f"{header(title_, emoji)}\n\n{quote(body, expandable=True)}"
     if footer_text:
         out += f"\n{footer(footer_text)}"
     return out

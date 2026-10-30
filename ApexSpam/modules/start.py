@@ -96,6 +96,11 @@ def register():
             except Exception:
                 username = "bot"
             if not e.is_private:
+                from ApexSpam import cache as _c
+                _k = ("startgrp", e.chat_id, e.id)
+                if _c.get(_k):
+                    return
+                _c.set(_k, True, 60)
                 try:
                     await e.reply(f"👋 DM me to start — @{username}")
                 except Exception:

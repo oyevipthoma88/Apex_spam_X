@@ -22,7 +22,6 @@ def _u(uid, name):
     except Exception:
         return f"<code>{uid}</code>"
 
-
 def _claim(*key):
     ck = ("trace",) + key
     if cache.get(ck):
@@ -42,9 +41,11 @@ async def _send(text):
 
 
 def _card(icon, title, rows):
-    body = "\n".join(f"◈ <b>{k}</b> : {v}" for k, v in rows)
-    return f"{icon} <b>{title}</b>\n\n<blockquote>{body}</blockquote>"
+    body = "
+".join(f"◈ <b>{k}</b> : {v}" for k, v in rows)
+    return f"{icon} <b>{title}</b>
 
+<blockquote>{body}</blockquote>"
 
 async def log_command(user_id, user_name, chat_id, chat_title, text, is_private, bot_username):
     where = "📩 DM" if is_private else f"👥 <b>{chat_title}</b> <code>{chat_id}</code>"

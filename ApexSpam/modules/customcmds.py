@@ -6,6 +6,7 @@ import time
 from telethon import events
 
 from ApexSpam import HNDLR, CLIENTS
+from ApexSpam import cache
 from ApexSpam.ui import header, quote, kv
 from models.customcmds import set_cmd, del_cmd, list_cmds, load_all
 
@@ -26,7 +27,7 @@ RESERVED = {
     "setcaption", "font", "axlogs", "axreboot", "reboot",
     "nc", "banall", "unbanall",
     "rraid", "drraid", "stop", "bspam", "shayriraid",
-    "setcmd", "delcmd", "mycmds",
+    "setcmd", "delcmd", "mycmds", "gcsetup", "diag", "botcheck", "listsudo",
 }
 
 
@@ -104,6 +105,10 @@ def register():
             cmd = e.pattern_match.group(1).lower()
             if cmd in RESERVED:
                 return
+            _ck = ("cc", e.chat_id, e.id)
+            if cache.get(_ck):
+                return
+            cache.set(_ck, True, 30)
             resp = get(e.sender_id, cmd)
             if not resp:
                 return

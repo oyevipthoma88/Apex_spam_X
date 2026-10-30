@@ -88,6 +88,11 @@ async def main():
         log.info('bot info cached')
     except Exception as e:
         log.warning(f'botinfo warm: {e}')
+    for i, cli in enumerate(config.CLIENTS, 1):
+        try:
+            log.info(f"client #{i}: {len(cli.list_event_handlers())} handlers")
+        except Exception:
+            pass
     try:
         trace.register()
     except Exception as e:

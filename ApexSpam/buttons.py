@@ -1,7 +1,7 @@
-"""Apex Spam X — buttons with Bot API 9.4 styles + 7.11 copy buttons."""
+"""Apex Spam X — inline buttons (copy_btn disabled: reply-keyboard only)."""
 import logging
+
 from telethon import Button
-from telethon.tl import types
 
 log = logging.getLogger("ApexSpam.buttons")
 HAS_STYLE = True
@@ -9,7 +9,7 @@ HAS_STYLE = True
 
 def ib(text, data, kind="primary", icon=None):
     try:
-        return Button.inline(text, data, style=kind, icon=icon)
+        return Button.inline(text, data, style=kind)
     except TypeError:
         return Button.inline(text, data)
     except Exception:
@@ -18,7 +18,7 @@ def ib(text, data, kind="primary", icon=None):
 
 def ub(text, url, kind="primary", icon=None):
     try:
-        return Button.url(text, url, style=kind, icon=icon)
+        return Button.url(text, url, style=kind)
     except TypeError:
         return Button.url(text, url)
     except Exception:
@@ -26,10 +26,9 @@ def ub(text, url, kind="primary", icon=None):
 
 
 def copy_btn(text, copy_text, kind="primary", icon=None):
-    try:
-        return types.KeyboardButtonCopy(text=text, copy_text=copy_text)
-    except Exception:
-        return None
+    """KeyboardButtonCopy is a REPLY keyboard button — invalid in inline
+    keyboards (Telegram: BUTTON_TYPE_INVALID). Return None to disable."""
+    return None
 
 
 def nav(back=b"back", close=True):

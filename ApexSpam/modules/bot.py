@@ -1,4 +1,5 @@
-"""Apex Spam X — ping (compact + branded) + reboot."""
+"""Apex Spam X — ping card (error-safe) + reboot."""
+import logging
 import time
 
 from telethon import events
@@ -9,6 +10,8 @@ from ApexSpam import (
 )
 from ApexSpam import botinfo, respond
 from ApexSpam.buttons import ib, grid
+
+log = logging.getLogger("ApexSpam.bot")
 
 
 def _uptime():
@@ -21,25 +24,25 @@ def _uptime():
 
 def _sig(rtt):
     if rtt < 150:
-        return "🔥", "𝘐𝘯𝘴𝘵𝘢𝘯𝘵"
+        return "🔥", "ɪɴsᴛᴀɴᴛ"
     if rtt < 400:
-        return "⚡", "𝘍𝘢𝘴𝘵"
+        return "⚡", "ғᴀsᴛ"
     if rtt < 800:
-        return "🟢", "𝘎𝘰𝘰𝘥"
-    return "🐢", "𝘚𝘭𝘰𝘸"
+        return "🟢", "ɢᴏᴏᴅ"
+    return "🐢", "sʟᴏᴡ"
 
 
 def _card(rtt, username):
     e, label = _sig(rtt)
     return (
         "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
-        "   ⚡ <b>ᴀ ᴘ ᴇ x   x   s ᴘ ᴀ ᴍ</b> ⚡\n"
+        "   ⚡ <b>ᴀ ᴘ ᴇ x  x  s ᴘ ᴀ ᴍ</b> ⚡\n"
         "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
         f"🏓 <b>ᴘ ᴏ ɴ ɢ</b>  ·  {e} <b>{label}</b>\n\n"
         f"<blockquote>"
-        f"◈ <b>Latency</b>  <code>{rtt} ms</code>\n"
-        f"◈ <b>Uptime</b>   <code>{_uptime()}</code>\n"
-        f"◈ <b>Bot</b>      <code>@{username}</code>"
+        f"◈ <b>Latency</b>  :  <code>{rtt} ms</code>\n"
+        f"◈ <b>Uptime</b>   :  <code>{_uptime()}</code>\n"
+        f"◈ <b>Bot</b>      :  <code>@{username}</code>"
         f"</blockquote>\n\n"
         "<i>💫 ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴘᴇx x sᴘᴀᴍ</i>"
     )
@@ -57,54 +60,66 @@ def register():
     for c in CLIENTS:
         @c.on(events.NewMessage(pattern=r"^[\.!/]ping(?: |$)"))
         async def ping(e):
-            t0 = time.time()
-            u = await botinfo.username(e.client)
-            rtt = round((time.time() - t0) * 1000, 2)
-            await e.reply(_card(rtt, u), buttons=_btns(), parse_mode="html")
+            try:
+                t0 = time.time()
+                u = await botinfo.username(e.client)
+                rtt = round((time.time() - t0) * 1000, 2)
+                await e.reply(_card(rtt, u), buttons=_btns(), parse_mode="html")
+            except Exception as ex:
+                log.exception(f"ping failed: {ex}")
+                try:
+                    await e.reply("🏓 pong", parse_mode="html")
+                except Exception:
+                    pass
 
         @c.on(events.CallbackQuery(data=b"ping:refresh"))
         async def refresh(e):
-            await respond.ack(e, "⚡")
-            t0 = time.time()
-            u = await botinfo.username(e.client)
-            rtt = round((time.time() - t0) * 1000, 2)
-            await respond.edit(e, _card(rtt, u), _btns())
+            try:
+                await respond.ack(e, "⚡")
+                t0 = time.time()
+                u = await botinfo.username(e.client)
+                rtt = round((time.time() - t0) * 1000, 2)
+                await respond.edit(e, _card(rtt, u), _btns())
+            except Exception as ex:
+                log.exception(f"ping refresh: {ex}")
 
         @c.on(events.CallbackQuery(data=b"ping:speed"))
         async def speed(e):
-            await respond.ack(e, "📊")
-            u = await botinfo.username(e.client)
-            s = []
-            for _ in range(3):
-                t = time.time()
-                try:
-                    await e.client.get_me()
-                    s.append(round((time.time() - t) * 1000, 2))
-                except Exception:
-                    pass
-            if not s:
-                return await respond.ack(e, "Failed", True)
-            best, worst = min(s), max(s)
-            avg = round(sum(s) / len(s), 2)
-            emoji, label = _sig(avg)
-            text = (
-                "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
-                "   ⚡ <b>ᴀ ᴘ ᴇ x   x   s ᴘ ᴀ ᴍ</b> ⚡\n"
-                "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
-                f"📊 <b>s ᴘ ᴇ ᴇ ᴅ</b>  ·  {emoji} <b>{label}</b>\n\n"
-                f"<blockquote>"
-                f"◈ <b>Best</b>  <code>{best} ms</code>\n"
-                f"◈ <b>Avg</b>   <code>{avg} ms</code>\n"
-                f"◈ <b>Worst</b> <code>{worst} ms</code>"
-                f"</blockquote>\n\n"
-                "<i>💫 ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴀᴘᴇx x sᴘᴀᴍ</i>"
-            )
-            await respond.edit(e, text, _btns())
+            try:
+                await respond.ack(e, "📊")
+                u = await botinfo.username(e.client)
+                samples = []
+                for _ in range(3):
+                    t = time.time()
+                    try:
+                        await e.client.get_me()
+                        samples.append(round((time.time() - t) * 1000, 2))
+                    except Exception:
+                        pass
+                if not samples:
+                    return await respond.ack(e, "Failed", True)
+                best, worst = min(samples), max(samples)
+                avg = round(sum(samples) / len(samples), 2)
+                emoji, label = _sig(avg)
+                text = (
+                    "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
+                    "   ⚡ <b>ᴀ ᴘ ᴇ x  x  s ᴘ ᴀ ᴍ</b> ⚡\n"
+                    "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
+                    f"📊 <b>s ᴘ ᴇ ᴇ ᴅ</b>  ·  {emoji} <b>{label}</b>\n\n"
+                    f"<blockquote>"
+                    f"◈ <b>Best</b>  :  <code>{best} ms</code>\n"
+                    f"◈ <b>Avg</b>   :  <code>{avg} ms</code>\n"
+                    f"◈ <b>Worst</b> :  <code>{worst} ms</code>"
+                    f"</blockquote>"
+                )
+                await respond.edit(e, text, _btns())
+            except Exception as ex:
+                log.exception(f"ping speed: {ex}")
 
         @c.on(events.CallbackQuery(data=b"ping:close"))
         async def close_ping(e):
-            await respond.ack(e)
             try:
+                await respond.ack(e)
                 await e.delete()
             except Exception:
                 pass
