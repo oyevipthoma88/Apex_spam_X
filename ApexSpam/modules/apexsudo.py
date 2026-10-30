@@ -86,7 +86,8 @@ def register():
             for x in records:
                 tag = x.get("source", "mongo")
                 by = x.get("added_by", 0)
-                rows.append(f"◈ <code>{x['user_id']}</code>  <i>{tag}</i>  by <code>{by}</code>")
+                by_label = "👑 owner" if by == OWNER_ID else f"👤 <code>{by}</code>"
+                rows.append(f"◈ <code>{x['user_id']}</code>  <i>{tag}</i>  {by_label}")
             body = "\n".join(rows) or "<i>none</i>"
             await e.reply(
                 f"{header('sudo list', '🔐')}\n\n"
