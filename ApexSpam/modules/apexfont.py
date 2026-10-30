@@ -44,7 +44,7 @@ async def _open_menu(e):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]font(?: |$)(.*)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]font(?: |$)(.*)"))
         async def font_cmd(e):
             if e.sender_id != OWNER_ID:
                 return

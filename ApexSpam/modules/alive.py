@@ -34,7 +34,7 @@ def _buttons():
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]alive(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]alive(?: |$)"))
         async def alive(e):
             me = await e.client.get_me()
             await e.reply(_card(me.username or "bot"), buttons=_buttons(), parse_mode="html")

@@ -21,7 +21,7 @@ async def _resolve(event, arg):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]addsudo(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]addsudo(?: |$)"))
         async def addsudo(e):
             if e.sender_id != OWNER_ID:
                 return
@@ -44,7 +44,7 @@ def register():
                 parse_mode="html",
             )
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]delsudo(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]delsudo(?: |$)"))
         async def delsudo(e):
             if e.sender_id != OWNER_ID:
                 return
@@ -66,7 +66,7 @@ def register():
                 parse_mode="html",
             )
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]listsudo(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]listsudo(?: |$)"))
         async def listsudo(e):
             if e.sender_id != OWNER_ID:
                 return

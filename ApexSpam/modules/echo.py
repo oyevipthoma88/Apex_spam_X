@@ -7,7 +7,7 @@ ECHO = []
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]echo(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]echo(?: |$)"))
         async def echo_cmd(event):
             if event.sender_id not in SUDO_USERS:
                 return

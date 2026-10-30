@@ -77,7 +77,7 @@ def register():
 
     for c in CLIENTS:
         # /start with multi-prefix
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]start(?:@\w+)?(?:\s|$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]start(?:@\w+)?(?:\s|$)"))
         async def start(e):
             log.info(f"START-HIT uid={e.sender_id} priv={e.is_private}")
             try:

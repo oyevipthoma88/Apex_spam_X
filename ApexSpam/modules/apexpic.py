@@ -18,7 +18,7 @@ def _detect_ext(data: bytes) -> str:
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]setpic(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]setpic(?: |$)"))
         async def setpic(e):
             if e.sender_id != OWNER_ID:
                 return
@@ -59,7 +59,7 @@ def register():
                 parse_mode="html",
             )
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]delpic(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]delpic(?: |$)"))
         async def delpic(e):
             if e.sender_id != OWNER_ID:
                 return
@@ -71,7 +71,7 @@ def register():
                 parse_mode="html",
             )
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]setcaption(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]setcaption(?: |$)"))
         async def setcaption(e):
             if e.sender_id != OWNER_ID:
                 return

@@ -5,7 +5,7 @@ from ApexSpam import HNDLR, START_TIME, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10
 
 def register():
     for c in [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10]:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]apxping(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]apxping(?: |$)"))
         async def apxping(e):
             t0 = time.time()
             msg = await e.reply("⚡ `Pinging...`", parse_mode="md")

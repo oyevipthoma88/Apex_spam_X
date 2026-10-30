@@ -1,4 +1,4 @@
-"""Apex Spam X — per-handler-per-client dedup (no cross-handler blocking)."""
+"""Apex Spam X — global per-handler dedup."""
 import logging
 import time
 
@@ -7,7 +7,6 @@ log = logging.getLogger("ApexSpam.dedup")
 _seen = {}
 _WINDOW = 3.0
 _patched = False
-_CLIENT_IDS = {}
 
 
 def _prune(now):
@@ -15,8 +14,12 @@ def _prune(now):
         _seen.pop(k, None)
 
 
-def is_dup(key):
-    """Generic dup check. Caller provides unique key tuple."""
+def is_dup(chat_id, msg_id=None):
+    """Accept both (chat_id, msg_id) and ((a, b, c, d),) forms."""
+    if msg_id is None:
+        key = chat_id if isinstance(chat_id, tuple) else (chat_id,)
+    else:
+        key = (chat_id, msg_id)
     now = time.time()
     _prune(now)
     if key in _seen:
@@ -30,8 +33,6 @@ def clear():
 
 
 def patch():
-    """Wrap TelegramClient.on so each (client, chat, msg, handler) fires ONCE.
-    Different handlers and different clients still fire → all bots respond."""
     global _patched
     if _patched:
         return True
@@ -51,7 +52,6 @@ def patch():
                         if cid is not None and mid is not None:
                             key = (id(self), cid, mid, hname)
                             if is_dup(key):
-                                log.debug(f"dup {key}")
                                 return
                     except Exception:
                         pass

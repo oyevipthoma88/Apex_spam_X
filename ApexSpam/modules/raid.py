@@ -23,6 +23,6 @@ def _make_handler(pack, name):
 def register():
     for c in CLIENTS:
         for name, pack in CMD_PACKS:
-            c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]{name}(?: |$)"))(
+            c.on(events.NewMessage(pattern=rf"^[\.!/]{name}(?: |$)"))(
                 _make_handler(pack, name)
             )

@@ -63,7 +63,7 @@ def _confirm(title, emoji, lines, ok_label, ok_data, no_data):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]banall(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]banall(?: |$)"))
         async def banall(e):
             if not _authed(e.sender_id): return
             if not (e.is_group or e.is_channel):
@@ -78,7 +78,7 @@ def register():
             )
             await e.reply(text, buttons=btns, parse_mode="html")
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]unbanall(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]unbanall(?: |$)"))
         async def unbanall(e):
             if not _authed(e.sender_id): return
             if not (e.is_group or e.is_channel):
@@ -93,7 +93,7 @@ def register():
             )
             await e.reply(text, buttons=btns, parse_mode="html")
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]nc(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]nc(?: |$)"))
         async def nc(e):
             if not _authed(e.sender_id): return
             if not (e.is_group or e.is_channel):

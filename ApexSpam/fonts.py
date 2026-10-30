@@ -39,8 +39,27 @@ _SMALL_CAPS = {
 }
 
 
+_STYLED_RANGES = [
+    (0x1D400, 0x1D419, 'A'), (0x1D41A, 0x1D433, 'a'),
+    (0x1D434, 0x1D44D, 'A'), (0x1D44E, 0x1D467, 'a'),
+    (0x1D468, 0x1D481, 'A'), (0x1D482, 0x1D49B, 'a'),
+    (0x1D4D0, 0x1D4E9, 'A'), (0x1D4EA, 0x1D503, 'a'),
+    (0x1D538, 0x1D551, 'A'), (0x1D552, 0x1D56B, 'a'),
+    (0x1D5A0, 0x1D5B9, 'A'), (0x1D5BA, 0x1D5D3, 'a'),
+    (0x1D670, 0x1D689, 'A'), (0x1D68A, 0x1D6A3, 'a'),
+]
+
+_SMALL_CAPS = {
+    'ᴀ':'A','ʙ':'B','ᴄ':'C','ᴅ':'D','ᴇ':'E','ꜰ':'F','ɢ':'G','ʜ':'H',
+    'ɪ':'I','ᴊ':'J','ᴋ':'K','ʟ':'L','ᴍ':'M','ɴ':'N','ᴏ':'O','ᴘ':'P',
+    'ǫ':'Q','ʀ':'R','ꜱ':'S','ᴛ':'T','ᴜ':'U','ᴠ':'V','ᴡ':'W','x':'x',
+    'ʏ':'Y','ᴢ':'Z',
+    'ᵦ':'b','ᵧ':'g','ᵨ':'p','ᵩ':'q','ᵪ':'x',
+}
+
+
 def asciify(text):
-    """Strip styled Unicode back to plain ASCII so fonts can re-style."""
+    """Strip any styled Unicode back to plain ASCII."""
     if not text:
         return text
     out = []

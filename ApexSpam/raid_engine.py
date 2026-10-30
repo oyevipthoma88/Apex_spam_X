@@ -9,7 +9,6 @@ from ApexSpam import fonts
 from ApexSpam import logger as xlog
 from models.raid import get_raid_messages
 from models.sudo import is_sudo
-from ApexSpam.dedup import is_dup
 
 MAX_RAID = 200
 DELAY = 0.15
@@ -46,8 +45,6 @@ async def _chat_title(event):
 
 
 async def execute_raid(event, fallback, cmd_name, category=None):
-    if is_dup(event.chat_id, event.id):
-        return
     if not await _authed(event.sender_id):
         return
 
@@ -95,7 +92,9 @@ async def execute_raid(event, fallback, cmd_name, category=None):
     mention = f"[{safe_name}](tg://user?id={uid})"
     sent = 0
     for _ in range(count):
-        body = f"{mention} {fonts.fx(choice(pack))}"
+        raw = choice(pack)
+        styled = fonts.fx(raw)
+        body = f"{mention} {styled}"
         try:
             await event.client.send_message(event.chat_id, body)
             sent += 1

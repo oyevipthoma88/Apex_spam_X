@@ -9,7 +9,7 @@ from ApexSpam.ui import header, kv
 
 def register():
     for c in [X1, X2, X3, X4, X5, X6, X7, X8, X9, X10]:
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]axlogs(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]axlogs(?: |$)"))
         async def axlogs(e):
             if e.sender_id != OWNER_ID:
                 return
@@ -37,7 +37,7 @@ def register():
             except Exception as err:
                 await e.reply(f"{header('heroku logs', '❌')}\n\n`{err}`", parse_mode="md")
 
-        @c.on(events.NewMessage(pattern=rf"^[{HNDLR}!/]axreboot(?: |$)"))
+        @c.on(events.NewMessage(pattern=rf"^[\.!/]axreboot(?: |$)"))
         async def axreboot(e):
             if e.sender_id != OWNER_ID:
                 return
