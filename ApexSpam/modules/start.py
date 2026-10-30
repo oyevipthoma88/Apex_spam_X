@@ -1,14 +1,14 @@
-"""Apex Spam X — /start with full fallback chain + logging."""
+"""Apex Spam X — /start (owner panel, no personal refs)."""
 import logging
 import time
 from io import BytesIO
 
 from telethon import events
 
-from ApexSpam import HNDLR, START_TIME, CLIENTS
-from ApexSpam.dedup import is_dup
+from ApexSpam import HNDLR, START_TIME, CLIENTS, OWNER_ID
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
-from ApexSpam.buttons import ib, ub
+from ApexSpam.buttons import ib
+from ApexSpam.dedup import is_dup
 from models.bot_settings import get_value
 
 log = logging.getLogger("ApexSpam.start")
@@ -16,13 +16,15 @@ log = logging.getLogger("ApexSpam.start")
 DEFAULT_CAPTION = "{header}\n\n{greet}\n\n{q1}\n\n{q2}\n\n{meta}"
 
 
-def _buttons():
-    return [
+def _buttons(uid=0):
+    rows = [
         [ib("⚡  C O M M A N D S", b"help_back", "primary")],
-        [ib("📖 About", b"about_btn", "primary"), ib("🛡️ Status", b"status_btn", "success")],
-        [ub("📢 Channel", "https://t.me/ApexSpamXSupport", "primary"),
-         ub("💬 Support", "https://t.me/ApexSpamXSupport", "primary")],
+        [ib("📖 About", b"about_btn", "primary"),
+         ib("🛡️ Status", b"status_btn", "success")],
     ]
+    if uid == OWNER_ID:
+        rows.append([ib("👑 Owner Panel", b"owner_panel", "danger")])
+    return rows
 
 
 async def _build(e, bot_username):
@@ -33,7 +35,7 @@ async def _build(e, bot_username):
     try:
         tpl = await get_value("start_caption")
     except Exception as ex:
-        log.warning(f"get_value(start_caption): {ex}")
+        log.warning(f"get_value: {ex}")
 
     text = safe_format(
         tpl if isinstance(tpl, str) and tpl.strip() else DEFAULT_CAPTION,
@@ -41,7 +43,8 @@ async def _build(e, bot_username):
         greet=f"Hey {link_user(e.sender_id, e.sender.first_name or 'User')} 👋",
         q1=quote("<i>Welcome to the ultimate raid engine.</i>"),
         q2=quote(
-            f"◈ <b>Prefix</b> : <code>{HNDLR}</code>\n"
+            f"◈ <b>Prefix</b> : <code>{HNDLR} ! /</code>\n"
+            f"◈ <b>Bot</b>    : <code>@{bot_username}</code>\n"
             f"◈ <b>Uptime</b> : <code>{h}h {m}m {s}s</code>\n"
             f"◈ <b>Status</b> : <b>✅ Online</b>"
         ),
@@ -51,36 +54,25 @@ async def _build(e, bot_username):
 
 
 async def _send(e, text):
-    # Level 1: photo + caption
     try:
         pic = await get_value("start_pic")
         ext = await get_value("start_pic_ext") or "jpg"
         if pic:
             stream = BytesIO(bytes(pic))
             stream.name = f"apex_start.{ext}"
-            log.info(f"start:L1 photo {len(pic)}B")
-            await e.reply(text, file=stream, buttons=_buttons(), parse_mode="html")
-            log.info("start:L1 photo OK")
+            await e.reply(text, file=stream,
+                          buttons=_buttons(e.sender_id), parse_mode="html")
             return
     except Exception as ex:
-        log.exception(f"start:L1 photo failed: {ex}")
-
-    # Level 2: HTML text
+        log.exception(f"pic failed: {ex}")
     try:
-        log.info("start:L2 HTML text")
-        await e.reply(text, buttons=_buttons(), parse_mode="html")
-        log.info("start:L2 text OK")
-        return
+        await e.reply(text, buttons=_buttons(e.sender_id), parse_mode="html")
     except Exception as ex:
-        log.exception(f"start:L2 HTML failed: {ex}")
-
-    # Level 3: plain text
-    try:
-        log.info("start:L3 plain fallback")
-        await e.reply("Apex Spam X is online. Use /help to explore.")
-        log.info("start:L3 plain OK")
-    except Exception as ex:
-        log.exception(f"start:L3 plain failed: {ex}")
+        log.exception(f"text failed: {ex}")
+        try:
+            await e.reply("⚡ Apex Spam X — online. /help")
+        except Exception:
+            pass
 
 
 def register():
@@ -90,31 +82,23 @@ def register():
             if is_dup(e.chat_id, e.id):
                 return
             try:
-                log.info(f"START-HIT uid={e.sender_id} chat={e.chat_id} priv={e.is_private}")
-            except Exception:
-                pass
-
-            try:
                 me = await e.client.get_me()
                 username = me.username or "bot"
             except Exception as ex:
-                log.exception(f"start:get_me failed: {ex}")
+                log.exception(f"get_me: {ex}")
                 username = "bot"
 
             if not e.is_private:
                 try:
                     await e.reply(f"👋 DM me to start — @{username}")
-                except Exception as ex:
-                    log.exception(f"start:group reply failed: {ex}")
+                except Exception:
+                    pass
                 return
 
             try:
-                text = await _build(e, username)
+                await _send(e, await _build(e, username))
             except Exception as ex:
-                log.exception(f"start:build failed: {ex}")
-                text = "⚡ <b>Apex Spam X</b> — online"
-
-            await _send(e, text)
+                log.exception(f"start: {ex}")
 
         @c.on(events.CallbackQuery(data=b"about_btn"))
         async def about(e):
@@ -125,19 +109,18 @@ def register():
                     + quote(
                         f"◈ <b>Name</b>     : <code>Apex Spam X</code>\n"
                         f"◈ <b>Bot</b>      : @{me.username}\n"
-                        f"◈ <b>Prefix</b>   : <code>{HNDLR}</code>\n"
+                        f"◈ <b>Prefix</b>   : <code>{HNDLR} ! /</code>\n"
                         f"◈ <b>Engine</b>   : <code>Telethon</code>\n"
                         f"◈ <b>Database</b> : <code>MongoDB</code>"
                     )
                     + "\n\n"
-                    + quote("👑 <b>Developer</b> : <b>@oyevipthoma88</b>")
+                    + quote("👑 <b>Powered by Apex Spam X</b>")
                     + f"\n{footer()}"
                 )
-                await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]], parse_mode="html")
+                await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]],
+                             parse_mode="html")
             except Exception as ex:
-                log.exception(f"about failed: {ex}")
-                try: await e.answer("Error", alert=True)
-                except Exception: pass
+                log.exception(f"about: {ex}")
 
         @c.on(events.CallbackQuery(data=b"status_btn"))
         async def status(e):
@@ -149,34 +132,31 @@ def register():
                     f"{header('status', '🛡️')}\n\n"
                     + quote(
                         f"◈ <b>Uptime</b> : <code>{h}h {m}m {s}s</code>\n"
-                        f"◈ <b>Status</b> : <b>✅ Online</b>\n"
-                        f"◈ <b>Engine</b> : <code>Healthy</code>"
+                        f"◈ <b>Status</b> : <b>✅ Online</b>"
                     )
                     + f"\n{footer()}"
                 )
-                await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]], parse_mode="html")
+                await e.edit(text, buttons=[[ib("« Back", b"start_back", "primary")]],
+                             parse_mode="html")
             except Exception as ex:
-                log.exception(f"status failed: {ex}")
-                try: await e.answer("Error", alert=True)
-                except Exception: pass
+                log.exception(f"status: {ex}")
 
         @c.on(events.CallbackQuery(data=b"owner_panel"))
         async def op(e):
-            from ApexSpam import OWNER_ID
             if e.sender_id != OWNER_ID:
                 return await e.answer("Owner only", alert=True)
             try:
-                from ApexSpam.modules.owner_panel import _text as _dev_text, _buttons as _dev_buttons
-                await e.edit(_dev_text(), buttons=_dev_buttons(), parse_mode="html")
-            except Exception:
+                from ApexSpam.modules.owner_panel import _text as t, _buttons as b
+                await e.edit(t(), buttons=b(), parse_mode="html")
+            except Exception as ex:
+                log.exception(f"owner_panel: {ex}")
                 await e.answer("Error", alert=True)
 
         @c.on(events.CallbackQuery(data=b"start_back"))
         async def back(e):
             try:
                 me = await e.client.get_me()
-                await e.edit(await _build(e, me.username or "bot"), buttons=_buttons(), parse_mode="html")
+                await e.edit(await _build(e, me.username or "bot"),
+                             buttons=_buttons(e.sender_id), parse_mode="html")
             except Exception as ex:
-                log.exception(f"back failed: {ex}")
-                try: await e.answer("Error", alert=True)
-                except Exception: pass
+                log.exception(f"back: {ex}")
