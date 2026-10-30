@@ -20,12 +20,12 @@ RESERVED = {
     "start", "help", "ping", "alive", "id", "leave", "gcdiag",
     "raid", "sraid", "craid", "qraid", "abuse", "flirt", "hraid",
     "hrraid", "loveraid", "gm", "ga", "gn", "emoji", "spam",
-    "addraid", "delraid", "listraid",
     "addsudo", "delsudo", "sudolist",
     "addadmin", "deladmin", "listadmin",
     "dev", "setname", "setbio", "setbotpic", "setpic", "delpic",
     "setcaption", "font", "axlogs", "axreboot", "reboot",
     "nc", "banall", "unbanall",
+    "rraid", "drraid", "stop", "bspam", "shayriraid",
     "setcmd", "delcmd", "mycmds",
 }
 

@@ -6,10 +6,10 @@ from ApexSpam import roles
 
 PAGES = {
     "help_raid": ("raid", "🔫",
-        "raid sraid craid qraid abuse flirt hraid hrraid loveraid gm ga gn emoji",
+        "raid sraid craid qraid abuse flirt hraid bspam hrraid loveraid shayriraid gm ga gn emoji",
         "`CMD COUNT @user` / reply"),
     "help_spam": ("spam", "💬", "spam", "`spam COUNT TEXT` / reply"),
-    "help_extra": ("extra", "🛠️", "ping alive id leave gcdiag", "basic"),
+    "help_extra": ("extra", "🛠️", "ping alive id leave gcdiag rraid drraid stop", "basic"),
     "help_admin": ("admin", "🛡️", "setpic delpic setcaption font axlogs axreboot reboot", "Owner"),
     "help_mod": ("moderation", "⚔️", "banall unbanall nc", "Owner / Sudo"),
     "help_sudo": ("sudo", "🔐", "addsudo delsudo sudolist addadmin deladmin listadmin", "Owner / Sudo"),

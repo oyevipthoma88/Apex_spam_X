@@ -1,56 +1,88 @@
-"""Apex Spam X — unified raid engine (Mongo + font + log channel)."""
+"""Apex Spam X — unified raid engine (flood guard, lock, log channel)."""
 import asyncio
+import logging
+import time
 from random import choice
 
-from telethon.errors import FloodWaitError
+from telethon.errors import (
+    ChatWriteForbiddenError,
+    FloodWaitError,
+    SlowModeWaitError,
+)
 
 from ApexSpam import HNDLR, OWNER_ID
-from ApexSpam import roles
-from ApexSpam import fonts
+from ApexSpam import fonts, roles
 from ApexSpam import logger as xlog
-from models.raid import get_raid_messages
-from models.sudo import is_sudo
 
-MAX_RAID = 200
-DELAY = 0.15
+log = logging.getLogger("ApexSpam.raid")
 
-
-async def _authed(uid):
-    return await roles.can_use(uid)
+MAX_RAID = 500
+DELAY = 0.12
+ACTIVE = {}
+COOLDOWN = {}
 
 
-async def _pack(category, fallback):
-    if category:
-        try:
-            msgs = await get_raid_messages(category)
-            if msgs:
-                return msgs + list(fallback)
-        except Exception:
-            pass
-    return list(fallback)
+def is_active(chat_id):
+    return chat_id in ACTIVE
+
+
+def stop(chat_id):
+    ACTIVE.pop(chat_id, None)
+
+
+def _cooldown_left(client):
+    until = COOLDOWN.get(id(client), 0)
+    return max(0.0, until - time.time())
+
+
+async def _send(client, chat_id, text):
+    if _cooldown_left(client) > 0:
+        return False
+    try:
+        await client.send_message(chat_id, text)
+        return True
+    except FloodWaitError as fe:
+        COOLDOWN[id(client)] = time.time() + fe.seconds + 1
+        log.warning(f"flood {fe.seconds}s client={id(client)}")
+        return False
+    except (ChatWriteForbiddenError, SlowModeWaitError) as e:
+        log.warning(f"send blocked: {e}")
+        return False
+    except Exception as e:
+        log.debug(f"send fail: {e}")
+        return False
 
 
 async def _chat_title(event):
     if event.is_private:
         return "DM"
     try:
-        chat = await event.get_chat()
-        return getattr(chat, "title", "unknown")
+        ch = await event.get_chat()
+        return getattr(ch, "title", "unknown")
     except Exception:
         return "unknown"
 
 
-async def execute_raid(event, fallback, cmd_name, category=None):
-    if not await _authed(event.sender_id):
-        return
-
-    parts = event.text.split(maxsplit=2)
-    usage = (
-        f"<b>Usage</b>\n<code>{HNDLR}{cmd_name} COUNT @user</code>\n"
+def _usage(cmd_name):
+    return (
+        f"<b>Usage</b>\n"
+        f"<code>{HNDLR}{cmd_name} COUNT @user</code>\n"
         f"<code>{HNDLR}{cmd_name} COUNT</code> (reply)"
     )
+
+
+async def execute_raid(event, pack, cmd_name):
+    if not await roles.can_use(event.sender_id):
+        return
+    if is_active(event.chat_id):
+        return await event.reply(
+            "⚠️ Raid already running here — send <code>.stop</code> to abort.",
+            parse_mode="html",
+        )
+
+    parts = event.text.split(maxsplit=2)
     if len(parts) < 2:
-        return await event.reply(usage, parse_mode="html")
+        return await event.reply(_usage(cmd_name), parse_mode="html")
     try:
         count = int(parts[1])
     except ValueError:
@@ -73,34 +105,27 @@ async def execute_raid(event, fallback, cmd_name, category=None):
         except Exception:
             return await event.reply("❌ Could not resolve reply target.", parse_mode="html")
     else:
-        return await event.reply(usage, parse_mode="html")
+        return await event.reply(_usage(cmd_name), parse_mode="html")
 
-    if await roles.role(uid) in (roles.OWNER, roles.SUDO, roles.ADMIN):
-        return await event.reply("❌ Protected user.", parse_mode="html")
+    if await roles.role(uid) != roles.USER:
+        return await event.reply("❌ Protected user (owner/sudo/admin).", parse_mode="html")
 
-    pack = await _pack(category or cmd_name, fallback)
     if not pack:
-        return await event.reply("❌ No messages in this pack.", parse_mode="html")
+        return await event.reply("❌ This pack is empty.", parse_mode="html")
 
-    safe_name = str(name).replace("[", "").replace("]", "").replace("(", "").replace(")", "")
-    mention = f"[{safe_name}](tg://user?id={uid})"
+    ACTIVE[event.chat_id] = True
     sent = 0
-    for _ in range(count):
-        raw = choice(pack)
-        styled = fonts.fx(raw)
-        body = f"{mention} {styled}"
-        try:
-            await event.client.send_message(event.chat_id, body)
-            sent += 1
-        except FloodWaitError as fe:
-            await asyncio.sleep(fe.seconds + 2)
-        except Exception:
-            pass
-        await asyncio.sleep(DELAY)
-
-    if sent == 0:
-        await event.reply("❌ All sends failed — check bot rights.", parse_mode="html")
-        return
+    mention = f"[{name}](tg://user?id={uid})"
+    try:
+        for _ in range(count):
+            if not is_active(event.chat_id):
+                break
+            body = f"{mention} {fonts.fx(choice(pack))}"
+            if await _send(event.client, event.chat_id, body):
+                sent += 1
+            await asyncio.sleep(DELAY)
+    finally:
+        stop(event.chat_id)
 
     try:
         await xlog.log_raid(
@@ -115,3 +140,9 @@ async def execute_raid(event, fallback, cmd_name, category=None):
         )
     except Exception:
         pass
+
+    if sent == 0:
+        await event.reply(
+            "❌ All sends blocked (flood wait / no rights).",
+            parse_mode="html",
+        )
