@@ -43,24 +43,47 @@ async def _get_user_client():
 
 
 async def _apply_name(name: str):
+    from ApexSpam.fonts import asciify
+    clean = asciify(name)[:64]
     ok = 0
     for c in CLIENTS:
+        uname = "?"
         try:
-            await c(SetBotInfoRequest(lang_code="", name=name))
+            me = await c.get_me()
+            uname = me.username or "?"
+            # Try with explicit bot param + lang_code en
+            try:
+                await c(SetBotInfoRequest(bot=me.id, lang_code="en", name=clean))
+            except Exception:
+                await c(SetBotInfoRequest(lang_code="", name=clean))
             ok += 1
+            log.info(f"name set @{uname} -> {clean!r}")
         except Exception as ex:
-            log.warning(f"name fail: {ex}")
+            log.warning(f"name fail @{uname}: {ex}")
     return ok
 
 
 async def _apply_bio(bio: str):
+    from ApexSpam.fonts import asciify
+    clean = asciify(bio)[:120]
     ok = 0
     for c in CLIENTS:
+        uname = "?"
         try:
-            await c(SetBotInfoRequest(lang_code="", about=bio, description=bio))
+            me = await c.get_me()
+            uname = me.username or "?"
+            try:
+                await c(SetBotInfoRequest(bot=me.id, lang_code="en", about=clean))
+            except Exception:
+                await c(SetBotInfoRequest(lang_code="", about=clean))
+            try:
+                await c(SetBotInfoRequest(bot=me.id, lang_code="en", description=clean))
+            except Exception:
+                pass
             ok += 1
+            log.info(f"bio set @{uname} -> {clean[:30]!r}")
         except Exception as ex:
-            log.warning(f"bio fail: {ex}")
+            log.warning(f"bio fail @{uname}: {ex}")
     return ok
 
 

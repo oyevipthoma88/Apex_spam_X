@@ -1,11 +1,10 @@
-"""Apex Spam X — ping (dedup + client tag) + Heroku reboot."""
+"""Apex Spam X — ping (no-edit, flood-safe) + Heroku reboot."""
 import time
 
 from telethon import events
 
 from ApexSpam import HNDLR, OWNER_ID, START_TIME, HEROKU_APP_NAME, HEROKU_API_KEY, CLIENTS
-from ApexSpam.dedup import is_dup
-from ApexSpam.ui import quote, kv, footer, title
+from ApexSpam.ui import title, quote, kv, footer
 
 try:
     from database import mongo_client
@@ -49,18 +48,16 @@ def _card(rtt, db, username):
 
 def register():
     for c in CLIENTS:
-        @c.on(events.NewMessage(pattern=rf"^[\.!/]ping(?: |$)"))
+        @c.on(events.NewMessage(pattern=r"^[\.!/]ping(?: |$)"))
         async def ping(e):
-            if is_dup(e.chat_id, e.id):
-                return
             t0 = time.time()
-            msg = await e.reply("⚡", parse_mode="html")
             me = await e.client.get_me()
             rtt = round((time.time() - t0) * 1000, 2)
             db = await _mongo_ms()
-            await msg.edit(_card(rtt, db, me.username or "bot"), parse_mode="html")
+            # Send ONCE — no edit → no flood wait
+            await e.reply(_card(rtt, db, me.username or "bot"), parse_mode="html")
 
-        @c.on(events.NewMessage(pattern=rf"^[\.!/]reboot(?: |$)"))
+        @c.on(events.NewMessage(pattern=r"^[\.!/]reboot(?: |$)"))
         async def reboot(e):
             if e.sender_id != OWNER_ID:
                 return
@@ -72,7 +69,8 @@ def register():
             try:
                 import heroku3
                 app = heroku3.from_key(HEROKU_API_KEY).app(HEROKU_APP_NAME)
-                await e.reply(f"♻️ Restarting <code>{HEROKU_APP_NAME}</code>…", parse_mode="html")
+                await e.reply(f"♻️ Restarting <code>{HEROKU_APP_NAME}</code>…",
+                              parse_mode="html")
                 app.restart()
             except Exception as err:
                 await e.reply(f"❌ <code>{err}</code>", parse_mode="html")

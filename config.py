@@ -15,6 +15,9 @@ START_TIME = time.time()
 HEROKU_APP_NAME = (os.getenv("HEROKU_APP_NAME") or "").strip()
 HEROKU_API_KEY = (os.getenv("HEROKU_API_KEY") or "").strip()
 HEROKU_API = HEROKU_API_KEY
+SUPPORT_LINK = (os.getenv("SUPPORT_LINK") or "https://t.me/ApexSpamXSupport").strip()
+SUDO_GC = (os.getenv("SUDO_GC") or "").strip()
+OWNER_USERNAME = (os.getenv("OWNER_USERNAME") or "").strip()
 USER_SESSION = (os.getenv("USER_SESSION") or "").strip()
 MONGO_DB_URI = (os.getenv("MONGO_DB_URI") or "").strip()
 

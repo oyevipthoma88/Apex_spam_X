@@ -7,7 +7,7 @@ from telethon import events
 
 from ApexSpam import HNDLR, START_TIME, CLIENTS, OWNER_ID
 from ApexSpam.ui import header, quote, divider, link_user, footer, safe_format
-from ApexSpam.buttons import ib
+from ApexSpam.buttons import ib, ub
 from models.bot_settings import get_value
 
 log = logging.getLogger("ApexSpam.start")
@@ -16,6 +16,7 @@ DEFAULT_CAPTION = "{header}\n\n{greet}\n\n{q1}\n\n{q2}\n\n{meta}"
 
 
 def _buttons(uid=0):
+    from ApexSpam import SUPPORT_LINK, OWNER_USERNAME
     rows = [
         [ib("⚡  C O M M A N D S", b"help_back", "primary")],
         [ib("📖 About", b"about_btn", "primary"),
@@ -23,6 +24,14 @@ def _buttons(uid=0):
     ]
     if uid == OWNER_ID:
         rows.append([ib("👑 Owner Panel", b"owner_panel", "danger")])
+    # Owner profile button (public)
+    if OWNER_USERNAME:
+        rows.append([ub("👤 Owner", f"https://t.me/{OWNER_USERNAME}", "primary")])
+    elif OWNER_ID:
+        rows.append([ub("👤 Owner", f"tg://user?id={OWNER_ID}", "primary")])
+    # Support link
+    if SUPPORT_LINK:
+        rows.append([ub("💬 Support", SUPPORT_LINK, "primary")])
     return rows
 
 
@@ -54,6 +63,7 @@ async def _send(e, text):
     try:
         pic = await get_value("start_pic")
         ext = await get_value("start_pic_ext") or "jpg"
+        log.info(f"start: pic type={type(pic).__name__} len={len(pic) if pic else 0} ext={ext}")
         if pic:
             stream = BytesIO(bytes(pic))
             stream.name = f"apex_start.{ext}"

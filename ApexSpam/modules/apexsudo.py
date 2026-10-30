@@ -67,7 +67,7 @@ def register():
             )
 
         @c.on(events.NewMessage(pattern=rf"^[\.!/]listsudo(?: |$)"))
-        async def listsudo(e):
+        async def sudolist(e):
             if e.sender_id != OWNER_ID:
                 return
             ids = await mongo_ids()

@@ -86,7 +86,7 @@ PAGES = {
     "help_sudo": header("sudo", "🔐") + "\n\n" + quote(
         f"<code>{HNDLR}addsudo ID</code>\n"
         f"<code>{HNDLR}delsudo ID</code>\n"
-        f"<code>{HNDLR}listsudo</code>",
+        f"<code>{HNDLR}sudolist</code>",
         expandable=True,
     ) + "\n\n" + quote("<i>Mongo + env union — global.</i>"),
     "help_font": header("font", "🎨") + "\n\n" + quote(
